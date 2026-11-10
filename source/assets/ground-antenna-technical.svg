@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" role="img" aria-label="Technical parabolic ground antenna with feed assembly, elevation mount and pedestal">
+<defs><linearGradient id="dish-metal" x2=".8" y2="1"><stop stop-color="#EDF6F5"/><stop offset=".5" stop-color="#B4C9CC"/><stop offset="1" stop-color="#526A78"/></linearGradient></defs>
+<g stroke-linejoin="round">
+<path d="M114 180L145 123L167 123L199 180" fill="none" stroke="#526A78" stroke-width="8"/>
+<path d="M128 180L156 145L185 180M137 160H177" fill="none" stroke="#102E43" stroke-width="2.3"/>
+<path d="M104 181H210L218 189H96Z" fill="#102E43"/>
+<path d="M144 111H170V139H144Z" fill="#193F53" stroke="#102E43" stroke-width="2"/>
+<circle cx="157" cy="121" r="10" fill="#B4C9CC" stroke="#102E43" stroke-width="2.5"/>
+<path d="M69 52Q111 141 204 128Q218 102 205 78L69 52Z" fill="url(#dish-metal)" stroke="#102E43" stroke-width="2.5"/>
+<ellipse cx="136" cy="66" rx="79" ry="26" transform="rotate(28 136 66)" fill="#EDF6F5" stroke="#102E43" stroke-width="2.8"/>
+<path d="M72 37Q116 60 204 101M89 29Q112 60 185 103M113 30Q130 62 162 98" fill="none" stroke="#B4C9CC" stroke-width="1.2"/>
+<path d="M69 29L144 19L204 103M144 19L139 65" fill="none" stroke="#526A78" stroke-width="2.6"/>
+<path d="M133 11L150 13L149 27L133 24Z" fill="#087F83" stroke="#102E43" stroke-width="2"/>
+<path d="M91 102Q139 127 186 123" fill="none" stroke="#526A78" stroke-width="1.5"/>
+</g></svg>

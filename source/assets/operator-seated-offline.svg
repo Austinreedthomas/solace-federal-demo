@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 230" role="img" aria-label="Seated human ground operator at a computer whose screen says OFFLINE">
+<g stroke-linecap="round" stroke-linejoin="round">
+<!-- Seated human: profile, torso, arms, bent legs and chair; no floating-head icon. -->
+<path d="M37 101V165H99M35 165H105M49 165V205M92 165V205M29 207H109" fill="none" stroke="#526A78" stroke-width="5"/>
+<path d="M67 56Q84 45 94 62L97 73L103 79L94 83Q93 97 80 98L69 91Z" fill="#193F53" stroke="#102E43" stroke-width="2"/>
+<path d="M76 94V104L93 111L100 154L64 154L61 117Z" fill="#526A78" stroke="#102E43" stroke-width="2"/>
+<path d="M87 115L112 143L144 143" fill="none" stroke="#193F53" stroke-width="10"/>
+<path d="M69 153L106 157L124 189L151 199M96 155L118 157L143 186L167 187" fill="none" stroke="#193F53" stroke-width="12"/>
+<path d="M139 199H159M158 188H178" fill="none" stroke="#102E43" stroke-width="7"/>
+<!-- Large legible monitor, with only the actually received alert on screen. -->
+<rect x="133" y="30" width="217" height="121" rx="3" fill="#EDF6F5" stroke="#102E43" stroke-width="3"/>
+<rect x="141" y="38" width="201" height="103" fill="#193F53"/>
+<text x="154" y="68" fill="#8FE3DA" font-family="Liberation Sans" font-size="17" font-weight="bold">STATUS</text>
+<text x="154" y="105" fill="#FFFFFF" font-family="Liberation Sans" font-size="22" font-weight="bold">OFFLINE</text>
+<path d="M234 151V167M217 168H254M117 175H356M130 175V214M339 175V214" fill="none" stroke="#102E43" stroke-width="4"/>
+<path d="M147 166H197" stroke="#526A78" stroke-width="3"/>
+</g></svg>

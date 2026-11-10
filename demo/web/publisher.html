@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Send a launch alert</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header>
+    <h1>Send a launch alert</h1>
+    <nav class="sitenav" aria-label="Demo pages">
+      <a data-role="publisher" href="/publisher" aria-current="page">Publisher</a>
+      <a data-role="operators" href="/operator">Primary Operator</a>
+      <a data-role="operators" href="/restricted-operator">Restricted Operator</a>
+    </nav>
+    <p class="badge" id="mode">Checking the Solace session…</p>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>Who should see it?</h2>
+      <p class="lead">Choose a site, then send. The operator console shows the alert when the broker delivers it.</p>
+      <div class="row" id="sites">
+        <button class="choice" type="button" data-kind="launch-ground1" aria-pressed="true">Ground 1</button>
+        <button class="choice" type="button" data-kind="launch-ground2" aria-pressed="false">Ground 2</button>
+      </div>
+      <p class="lead">The launch alert, the heartbeat, the direct alert, and the guaranteed launch alert use the selected ground. Ground 2 is another site. A heartbeat is a status event.</p>
+      <div class="row">
+        <button class="primary" id="send" type="button">Send launch alert</button>
+        <button type="button" id="heartbeat">Send heartbeat</button>
+      </div>
+      <div class="result" id="send-result">Choose a site and send the alert.</div>
+    </section>
+    <section class="panel">
+      <h2>If the operator disconnects</h2>
+      <p class="lead">Disconnect on the operator console first. A guaranteed alert waits on the broker. A direct alert is live only.</p>
+      <div class="row">
+        <button type="button" id="guaranteed" disabled>Send a guaranteed launch alert</button>
+        <p class="lead" id="guaranteed-note"></p>
+        <button type="button" id="direct">Send a direct alert</button>
+      </div>
+      <div class="result" id="offline-result">No offline check yet.</div>
+    </section>
+    <section class="panel" id="weather-panel" hidden>
+      <h2>Weather</h2>
+      <p class="lead" id="weather-note">This process publishes MQTT. The operator receives SMF.</p>
+      <p class="lead" id="weather-topic"></p>
+      <button type="button" id="weather" disabled>Publish a sample reading</button>
+      <div class="result" id="weather-result">No reading yet.</div>
+    </section>
+  </main>
+  <script>
+    const siteButtons = [...document.querySelectorAll("#sites .choice")];
+    let siteKind = "launch-ground1";
+    siteButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        siteKind = button.dataset.kind;
+        siteButtons.forEach((item) => item.setAttribute("aria-pressed", item === button ? "true" : "false"));
+      });
+    });
+    let requestSeq = 0;
+    let busy = false;
+    let guaranteedLocked = true;
+    const actionButtons = [...document.querySelectorAll("button")];
+    function receiptMatches(activeId, activeSeq, watchSeq, event) {
+      if (!activeId || String(activeSeq) !== String(watchSeq)) return false;
+      return !!(event && event.alertId === activeId && event.origin === "this-session");
+    }
+    function appendReceipt(node, seq, alertId) {
+      if (node.dataset.seq !== String(seq) || node.dataset.alertId !== alertId) return false;
+      const line = document.createElement("div");
+      line.dataset.receiptFor = alertId;
+      line.textContent = "The operator console received this alert from the broker.";
+      node.appendChild(line);
+      return true;
+    }
+    window.receiptMatches = receiptMatches;
+    window.appendReceipt = appendReceipt;
+    async function post(path, body) {
+      let response;
+      try {
+        response = await fetch(path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body || {})
+        });
+      } catch (err) {
+        const error = new Error("offline");
+        error.kind = "offline";
+        throw error;
+      }
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch (err) {
+        payload = null;
+      }
+      if (!response.ok || !payload || typeof payload !== "object") {
+        const error = new Error("http");
+        error.kind = "http";
+        error.status = response.status;
+        throw error;
+      }
+      payload.httpStatus = response.status;
+      return payload;
+    }
+    function postFailure(err) {
+      if (err && err.kind === "http") return "Server returned " + err.status + ".";
+      return "This page could not reach the demo server.";
+    }
+    function esc(value) {
+      return String(value || "").replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+    function paint(node, payload) {
+      const outcome = payload.outcome || "";
+      const bad = outcome === "refused" || outcome === "not-sent";
+      const good = outcome === "sent" || outcome === "acked";
+      node.className = "result " + (bad ? "bad" : good ? "ok" : "");
+      const id = payload.alertId ? `<div class="id">Alert ${esc(payload.alertId)}</div>` : "";
+      const topic = payload.topic ? `<div class="meta">${esc(payload.topic)}</div>` : "";
+      const detail = payload.detail ? `<details><summary>Broker detail</summary><div>${esc(payload.detail)}</div></details>` : "";
+      node.innerHTML = `<strong>${esc(payload.customerText || "No response.")}</strong>${id}${topic}${detail}`;
+      node.dataset.alertId = payload.alertId || "";
+    }
+    function setBusy(value) {
+      busy = value;
+      actionButtons.forEach((button) => {
+        button.disabled = button.id === "guaranteed" ? (value || guaranteedLocked) : value;
+      });
+    }
+    async function send(kind, node) {
+      if (busy) return;
+      const seq = ++requestSeq;
+      node.dataset.seq = String(seq);
+      node.dataset.alertId = "";
+      setBusy(true);
+      node.className = "result";
+      node.innerHTML = "<strong>Sending…</strong>";
+      let payload;
+      try {
+        payload = await post("/api/send", { kind });
+      } catch (err) {
+        if (node.dataset.seq !== String(seq)) return;
+        paint(node, {
+          outcome: "not-sent",
+          customerText: postFailure(err)
+        });
+        return;
+      } finally {
+        setBusy(false);
+      }
+      if (node.dataset.seq !== String(seq)) return;
+      paint(node, payload);
+      if ((payload.outcome === "sent" || payload.outcome === "acked") && payload.alertId) {
+        watch(payload.alertId, node, seq);
+      }
+    }
+    async function watch(alertId, node, seq) {
+      for (let i = 0; i < 20; i++) {
+        if (node.dataset.seq !== String(seq)) return;
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        let state;
+        try {
+          state = await fetch("/api/state").then((response) => response.json());
+        } catch (err) {
+          return;
+        }
+        const hit = (state.events || []).some((event) => receiptMatches(alertId, node.dataset.seq, seq, event));
+        if (hit) {
+          appendReceipt(node, seq, alertId);
+          return;
+        }
+      }
+    }
+    document.getElementById("send").addEventListener("click", () => send(siteKind, document.getElementById("send-result")));
+    function selectedGround() {
+      return siteKind === "launch-ground2" ? "ground2" : "ground1";
+    }
+    function heartbeatKind() {
+      return "heartbeat-" + selectedGround();
+    }
+    function guaranteedKind() {
+      return "guaranteed-launch-" + selectedGround();
+    }
+    function directKind() {
+      return "direct-live-" + selectedGround();
+    }
+    document.getElementById("heartbeat").addEventListener("click", () => send(heartbeatKind(), document.getElementById("send-result")));
+    document.getElementById("guaranteed").addEventListener("click", () => send(guaranteedKind(), document.getElementById("offline-result")));
+    document.getElementById("direct").addEventListener("click", () => send(directKind(), document.getElementById("offline-result")));
+    document.getElementById("weather").addEventListener("click", () => send("weather", document.getElementById("weather-result")));
+    async function health() {
+      const badge = document.getElementById("mode");
+      try {
+        const state = await fetch("/api/state").then((response) => response.json());
+        guaranteedLocked = state.guaranteedAvailable === false;
+        document.getElementById("guaranteed").disabled = busy || guaranteedLocked;
+        const note = document.getElementById("guaranteed-note");
+        if (note) note.textContent = state.guaranteedNote || "";
+        if (state.publisherName === "Solace Cloud" && state.operatorName === "local Solace broker") {
+          const connected = state.brokerConnected ? "Connected to Solace Cloud." : "Not connected. Configured target: Solace Cloud.";
+          badge.textContent = connected + " Bridge to-cloud-unclass carries alerts to the operator broker.";
+        } else {
+          badge.textContent = state.publisherStatus || "Not connected.";
+        }
+        const weather = document.getElementById("weather-panel");
+        const showWeather = !!(state.weatherEnabled || state.weatherProblem);
+        if (weather) weather.hidden = !showWeather;
+        const weatherButton = document.getElementById("weather");
+        if (weatherButton) weatherButton.disabled = busy || !state.weatherEnabled;
+        const weatherNote = document.getElementById("weather-note");
+        if (weatherNote && state.weatherProblem) weatherNote.textContent = state.weatherProblem;
+        const weatherTopic = document.getElementById("weather-topic");
+        if (weatherTopic) weatherTopic.textContent = state.weatherTopic ? ("MQTT topic " + state.weatherTopic + (state.weatherTarget ? " · " + state.weatherTarget : "")) : "";
+      } catch (err) {
+        badge.textContent = "This page cannot reach the demo server. Refresh after it is started again.";
+      }
+    }
+    health();
+    setInterval(health, 1000);
+  </script>
+</body>
+</html>

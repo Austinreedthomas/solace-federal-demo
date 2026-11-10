@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "alert-summary.schema.json",
+  "title": "AdvisoryAlertSummary",
+  "description": "Shape of a future Solace Agent Mesh advisory summary. This demo does not produce one.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["alertId", "topic", "advisoryOnly", "summary", "source"],
+  "properties": {
+    "alertId": {"type": "string", "minLength": 1},
+    "topic": {"type": "string", "minLength": 1},
+    "advisoryOnly": {"const": true},
+    "summary": {"type": "string", "minLength": 1},
+    "source": {"const": "solace-agent-mesh"}
+  }
+}

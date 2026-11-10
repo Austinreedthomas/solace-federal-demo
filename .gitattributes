@@ -1,0 +1,2 @@
+# PDF streams contain raw bytes. Do not convert line endings.
+*.pdf binary

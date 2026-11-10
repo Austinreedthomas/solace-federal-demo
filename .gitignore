@@ -1,0 +1,60 @@
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+id_rsa
+id_ed25519
+id_ecdsa
+credentials.json
+credentials.yml
+credentials.yaml
+**/secrets/
+**/*.secret
+
+# Broker volumes and local config
+broker-data/
+broker-volumes/
+docker-compose.override.yml
+docker-compose.local.yml
+*.local.yml
+*.local.yaml
+*.local.env
+
+# Transcripts and private prep notes
+transcripts/
+**/transcripts/
+**/*transcript*.txt
+**/*transcript*.vtt
+**/*transcript*.srt
+**/*transcript*.json
+prep-notes/
+private-notes/
+**/private-prep/
+
+# Generator intermediates (approved HTML and PDF live in presentation/)
+.render-deps/
+source/deck/*.pdf
+source/deck/solace-federal-deck.html
+renders/
+
+# Python, archives, and OS clutter
+__pycache__/
+*.py[cod]
+.venv/
+*.zip
+.DS_Store
+Thumbs.db
+Desktop.ini
+__MACOSX/
+
+# Test and runtime leftovers
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+*.pid

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Restricted Operator</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body class="restricted">
+  <header>
+    <h1>Restricted Operator</h1>
+    <nav class="sitenav" aria-label="Demo pages">
+      <a data-role="publisher" href="/publisher">Publisher</a>
+      <a data-role="operators" href="/operator">Primary Operator</a>
+      <a data-role="operators" href="/restricted-operator" aria-current="page">Restricted Operator</a>
+    </nav>
+    <p class="identity" id="identity">Checking whether the restricted client is turned on…</p>
+    <p class="badge" id="mode">Not connected</p>
+    <p class="where" id="actor">No client. No action yet.</p>
+    <p class="where" id="policy"></p>
+    <p class="where" id="problem"></p>
+  </header>
+  <main>
+    <section class="panel">
+      <h2>Subscribe and send one</h2>
+      <p class="lead" id="perm-allow-topic">Example topic is unavailable until the restricted client is configured.</p>
+      <p class="lead">One subscribe and one send. This client receives its own message. The session closes when the click finishes.</p>
+      <button type="button" id="perm-allow" disabled>Subscribe and send one</button>
+      <div class="result" id="perm-allow-result">Not started.</div>
+    </section>
+    <section class="panel">
+      <h2>Request the forbidden subscription</h2>
+      <p class="lead" id="perm-sub-topic">Forbidden topic is unavailable until the restricted client is configured.</p>
+      <p class="lead">One subscribe attempt. The broker decides. The session closes when the click finishes.</p>
+      <button class="warn" type="button" id="perm-sub" disabled>Request the forbidden subscription</button>
+      <div class="result" id="perm-sub-result">Not started.</div>
+    </section>
+    <section class="panel">
+      <h2>Try to publish to a forbidden topic</h2>
+      <p class="lead" id="perm-pub-topic">Forbidden topic is unavailable until the restricted client is configured.</p>
+      <p class="lead">One publish attempt. The broker accepts or rejects it.</p>
+      <button class="warn" type="button" id="perm-pub" disabled>Try to publish to a forbidden topic</button>
+      <div class="result" id="perm-pub-result">Not started.</div>
+      <details>
+        <summary>How this publish is checked</summary>
+        <div>This click waits until the broker accepts or rejects the publish. It sends one persistent message so the broker answers.</div>
+      </details>
+    </section>
+  </main>
+  <script>
+    let permissionsReady = false;
+    let permissionsBusy = false;
+    let statusOwned = false;
+    let lastState = null;
+    const buttons = ["perm-allow", "perm-sub", "perm-pub"];
+    function esc(value) {
+      return String(value || "").replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+    function setButtons(disabled) {
+      buttons.forEach((id) => {
+        const button = document.getElementById(id);
+        button.disabled = disabled;
+        button.setAttribute("aria-disabled", disabled ? "true" : "false");
+      });
+    }
+    function setIdle(state) {
+      document.getElementById("mode").textContent = "Not connected";
+      if (state && state.permissionsReady) {
+        document.getElementById("actor").textContent = "Client " + state.permissionsClient + ". No action yet.";
+      } else {
+        document.getElementById("actor").textContent = "No client. No action yet.";
+      }
+    }
+    function applyIdentity(state) {
+      lastState = state;
+      const identity = document.getElementById("identity");
+      const policy = document.getElementById("policy");
+      const problem = document.getElementById("problem");
+      permissionsReady = !!state.permissionsReady;
+      if (!state.permissionsEnabled) {
+        identity.textContent = "Restricted Operator is not turned on. No restricted client is connected.";
+        policy.textContent = "";
+        problem.textContent = "";
+      } else if (!state.permissionsReady) {
+        identity.textContent = "The restricted client is not configured. Nothing is connected.";
+        policy.textContent = "";
+        problem.textContent = state.permissionsProblem || "";
+      } else {
+        identity.textContent = "Client " + state.permissionsClient + ". " + (state.permissionsBrokerLabel || "Solace broker") + ".";
+        policy.textContent = state.permissionsPolicyNote || "";
+        problem.textContent = "";
+      }
+      const allow = document.getElementById("perm-allow-topic");
+      const sub = document.getElementById("perm-sub-topic");
+      const pub = document.getElementById("perm-pub-topic");
+      if (state.permissionsReady) {
+        allow.textContent = "Example topic " + state.permissionsAllowedTopic + ". The allow exception is the prefix " + state.permissionsAllowPrefix + ".";
+        sub.textContent = "Forbidden topic " + state.permissionsDeniedTopic + ".";
+        pub.textContent = "Forbidden topic " + state.permissionsDeniedTopic + ".";
+      }
+      if (!statusOwned && !permissionsBusy) setIdle(state);
+      if (!permissionsBusy) setButtons(!permissionsReady);
+    }
+    function attemptStatus(payload) {
+      if (!payload || payload.result === "unknown" || typeof payload.connectionVerified !== "boolean") {
+        return {
+          mode: "Result unknown",
+          actor: "This page did not receive the broker result. Authentication and session closure are unknown."
+        };
+      }
+      if (payload.result === "off") {
+        return { mode: "Not connected", actor: "The restricted client is not turned on. No attempt was made." };
+      }
+      if (payload.result === "busy") {
+        return {
+          mode: "Another click is still running",
+          actor: "Another click is still running. This click does not show whether that attempt authenticated or closed."
+        };
+      }
+      const client = payload.actor || "";
+      const topic = payload.topic || "";
+      const who = "Client " + client + ". Topic " + topic + ".";
+      if (payload.connectionVerified === true && payload.sessionClosed === true) {
+        return {
+          mode: "Session closed",
+          actor: "Session closed. Connection verified for this attempt. " + who
+        };
+      }
+      if (payload.connectionVerified === true) {
+        return {
+          mode: "Session closure unknown",
+          actor: "Connection verified for this attempt. Session closure was not confirmed. " + who
+        };
+      }
+      let closure = "";
+      if (payload.sessionClosed === true) closure = "Disconnect returned. ";
+      else if (payload.sessionClosed === false) closure = "Session closure was not confirmed. ";
+      if (payload.result === "failed") {
+        return {
+          mode: payload.sessionClosed === true ? "Session closed" : (payload.sessionClosed === false ? "Session closure unknown" : "Not connected"),
+          actor: "This attempt did not authenticate. " + closure + who
+        };
+      }
+      return {
+        mode: payload.sessionClosed === false ? "Session closure unknown" : "Result unknown",
+        actor: (closure || "Authentication was not confirmed. ") + who
+      };
+    }
+    function paint(node, payload) {
+      const result = payload.result || "failed";
+      const good = result === "received";
+      const refused = result === "denied";
+      node.className = "result" + (result === "unknown" ? "" : (good ? " ok" : (refused || result === "failed" ? " bad" : "")));
+      let title = "This click did not finish";
+      if (result === "unknown") title = "Result unknown";
+      else if (result === "received") title = "This client received its own message";
+      else if (result === "denied" && payload.action === "subscribe") title = "Broker refused this subscription";
+      else if (result === "denied") title = "Broker refused this publish";
+      else if (result === "accepted") title = "Broker accepted this subscription";
+      else if (result === "acked") title = "Broker accepted this publish";
+      else if (result === "missing") title = "No message arrived";
+      else if (result === "mismatch") title = "The message did not match";
+      else if (result === "busy") title = "Another click is still running";
+      else if (result === "off") title = "The restricted client is not turned on";
+      const actor = payload.actor ? `<div class="meta">Client ${esc(payload.actor)}</div>` : "";
+      const topic = payload.topic ? `<div class="meta">Topic ${esc(payload.topic)}</div>` : "";
+      const sent = payload.sentId ? `<div class="id">Sent ID ${esc(payload.sentId)}</div>` : "";
+      const received = payload.receivedId ? `<div class="id">Received ID ${esc(payload.receivedId)}</div>` : "";
+      const arrived = payload.receivedTopic ? `<div class="meta">Received topic ${esc(payload.receivedTopic)}</div>` : "";
+      let connection = "";
+      if (payload.connectionVerified === true && payload.sessionClosed === true) {
+        connection = "<div>Connection verified for this attempt. Session closed.</div>";
+      } else if (payload.connectionVerified === true) {
+        connection = "<div>Connection verified for this attempt. Session closure was not confirmed.</div>";
+      }
+      const receipt = result === "received"
+        ? "<div>The send returned. Matching ids show the message that arrived.</div>"
+        : "";
+      const ack = payload.brokerAck === true ? "<div>The broker acknowledged this publish.</div>" : "";
+      const sdk = payload.sdk ? `<div class="meta">${esc(payload.sdk)}</div>` : "";
+      const closure = payload.sessionClosed === false && payload.closureSdk
+        ? `<div class="meta">Session closure was not confirmed. ${esc(payload.closureSdk)}</div>`
+        : "";
+      node.innerHTML = `<strong>${esc(title)}</strong>${connection}${actor}${topic}${sent}${received}${arrived}${receipt}${ack}${sdk}${closure}`;
+    }
+    async function permissionsClick(action, node, topic) {
+      if (!permissionsReady || permissionsBusy || !lastState) return;
+      permissionsBusy = true;
+      statusOwned = true;
+      setButtons(true);
+      const client = lastState.permissionsClient || "";
+      document.getElementById("mode").textContent = "Waiting for the broker";
+      document.getElementById("actor").textContent = "Waiting for the broker. Client " + client + ". Topic " + topic + ".";
+      node.className = "result";
+      node.innerHTML = "<strong>Waiting for the broker.</strong>";
+      let payload = { result: "unknown", action: action, actor: client, topic: topic, sdk: "This page did not receive the broker result." };
+      try {
+        const response = await fetch("/api/permissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: action })
+        });
+        let parsed = null;
+        try {
+          parsed = await response.json();
+        } catch (err) {
+          parsed = null;
+        }
+        if (!response.ok) {
+          payload = { result: "unknown", action: action, actor: client, topic: topic, sdk: "Server returned " + response.status + "." };
+        } else if (!parsed || typeof parsed !== "object" || typeof parsed.connectionVerified !== "boolean") {
+          payload = { result: "unknown", action: action, actor: client, topic: topic, sdk: "This page did not receive the broker result." };
+        } else {
+          payload = parsed;
+        }
+      } catch (err) {
+        payload = { result: "unknown", action: action, actor: client, topic: topic, sdk: "This page did not receive the broker result." };
+      }
+      paint(node, payload);
+      const status = attemptStatus(payload);
+      document.getElementById("mode").textContent = status.mode;
+      document.getElementById("actor").textContent = status.actor;
+      permissionsBusy = false;
+      if (permissionsReady) setButtons(false);
+    }
+    document.getElementById("perm-allow").addEventListener("click", () => permissionsClick("allowed-send", document.getElementById("perm-allow-result"), (lastState && lastState.permissionsAllowedTopic) || ""));
+    document.getElementById("perm-sub").addEventListener("click", () => permissionsClick("subscribe", document.getElementById("perm-sub-result"), (lastState && lastState.permissionsDeniedTopic) || ""));
+    document.getElementById("perm-pub").addEventListener("click", () => permissionsClick("publish-guaranteed", document.getElementById("perm-pub-result"), (lastState && lastState.permissionsDeniedTopic) || ""));
+    async function health() {
+      try {
+        const state = await fetch("/api/state").then((response) => response.json());
+        applyIdentity(state);
+      } catch (err) {
+        if (!statusOwned) {
+          document.getElementById("identity").textContent = "This page cannot reach the demo server.";
+          document.getElementById("mode").textContent = "Not connected";
+        }
+      }
+    }
+    health();
+    setInterval(health, 1000);
+  </script>
+</body>
+</html>

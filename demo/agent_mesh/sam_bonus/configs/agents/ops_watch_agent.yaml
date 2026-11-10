@@ -1,0 +1,72 @@
+# Operations Watch: observes the primary operator and its guaranteed queue. Read-only tools.
+log:
+  stdout_log_level: INFO
+  log_file_level: INFO
+  log_file: ops-watch-agent.log
+
+!include ../shared_config.yaml
+
+apps:
+  - name: ops-watch-agent_app
+    app_base_path: .
+    app_module: solace_agent_mesh.agent.sac.app
+    broker:
+      <<: *broker_connection
+
+    app_config:
+      namespace: ${NAMESPACE}
+      supports_streaming: true
+      agent_name: "OperationsWatchAgent"
+      display_name: "Operations Watch"
+      model_provider:
+        - "general"
+      instruction: |
+        You are the Operations Watch agent for a space situational awareness demo.
+        You observe the primary operator on the local Solace broker. You do not consume from that operator's guaranteed queue and you do not publish.
+        A background monitor records when the primary operator disconnects and reconnects, the live depth of its guaranteed queue, and alerts seen on a Direct subscription.
+        When asked what happened overnight, what happened to the primary operator, whether anything was missed, or for an incident or outage report, call get_operator_incident_report first. Use get_operator_status if you only need the current connect state and queue depth.
+        Report only facts the tools returned: the disconnect window (disconnectedAt to reconnectedAt), each queued alert's id, ground (site) and type (kind), the peak and current queue depth, whether counts match, and whether all queued messages were delivered after reconnect.
+        If published events were not queued, mention them briefly as published but not queued for this operator.
+        Do not add names or details the tools did not return.
+        If get_operator_incident_report has incidentRecorded=false, say that no disconnect window is on record and report the current operator status the tools returned.
+        Show times exactly as the tools return them (local time with offset). Keep the answer short and factual.
+        State only what the tools show. End with the delivery confirmation the tool returned, for example that every queued message was delivered after reconnect and the queue depth is 0.
+      session_service: *default_session_service
+      artifact_service: *default_artifact_service
+      tools:
+        - tool_type: python
+          component_module: "ops_watch.tools"
+          component_base_path: "src"
+          function_name: "get_operator_status"
+        - tool_type: python
+          component_module: "ops_watch.tools"
+          component_base_path: "src"
+          function_name: "get_operator_incident_report"
+      agent_init_function:
+        module: "ops_watch.tools"
+        name: "init_ops_watch"
+        base_path: "src"
+        config: {}
+      agent_cleanup_function:
+        module: "ops_watch.tools"
+        name: "cleanup_ops_watch"
+        base_path: "src"
+        config: {}
+      agent_card:
+        description: "Observes the primary operator and its guaranteed queue on the local Solace broker, and reports the disconnect window, which alerts queued while the operator was disconnected, and whether they were delivered after reconnect."
+        defaultInputModes: [text]
+        defaultOutputModes: [text]
+        skills:
+          - id: operator_status
+            name: Operator status
+            description: "Reports whether the primary operator is currently receiving and the live depth of its guaranteed queue."
+          - id: operator_incident_report
+            name: Operator incident report
+            description: "Reports the most recent primary-operator disconnect window, the alerts that queued while it was disconnected, and confirms they were delivered after reconnect."
+      agent_card_publishing:
+        interval_seconds: 10
+      agent_discovery:
+        enabled: true
+      inter_agent_communication:
+        allow_list: []
+        request_timeout_seconds: 120

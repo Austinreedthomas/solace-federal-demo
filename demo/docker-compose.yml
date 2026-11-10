@@ -1,0 +1,31 @@
+# Local Solace Standard broker for this demo.
+# Image label on the pinned digest: release 10.26.0.9163.
+# Host SMF port 55554 maps to container port 55555.
+# If 8080 or 55554 is already in use on the host, set SOLACE_SEMP_PORT and
+# SOLACE_SMF_PORT in demo/.env to free ports before `docker compose up`.
+
+name: solace-ssa-demo
+
+services:
+  broker:
+    image: solace/solace-pubsub-standard@sha256:4891915f6882a8329ad662ff6638cb6ea14e4603447f2fd26e73f10e4adc55af
+    container_name: solace-ssa-demo
+    shm_size: "1gb"
+    ports:
+      - "127.0.0.1:${SOLACE_SEMP_PORT:-8080}:8080"
+      - "127.0.0.1:${SOLACE_SMF_PORT:-55554}:55555"
+    environment:
+      username_admin_globalaccesslevel: admin
+      username_admin_password: ${SOLACE_ADMIN_PASSWORD:?set SOLACE_ADMIN_PASSWORD in demo/.env}
+      system_scaling_maxconnectioncount: "100"
+      system_scaling_maxqueuemessagecount: "100"
+    volumes:
+      - solace_ssa_demo:/var/lib/solace
+    ulimits:
+      nofile:
+        soft: 2448
+        hard: 1048576
+
+volumes:
+  solace_ssa_demo:
+    name: solace-ssa-demo-storage

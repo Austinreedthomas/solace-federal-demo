@@ -1,0 +1,15 @@
+[Unit]
+Description=Solace publisher page
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/solace-publisher/app
+EnvironmentFile=/home/ubuntu/solace-publisher/publisher.env
+ExecStart=/home/ubuntu/solace-publisher/app/.venv/bin/python -m solace_demo web
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

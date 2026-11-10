@@ -1,0 +1,272 @@
+name: Broker tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  local-broker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      solace:
+        image: solace/solace-pubsub-standard@sha256:4891915f6882a8329ad662ff6638cb6ea14e4603447f2fd26e73f10e4adc55af
+        options: --shm-size=1g --ulimit nofile=2448:1048576
+        env:
+          username_admin_globalaccesslevel: admin
+          username_admin_password: admin
+          system_scaling_maxconnectioncount: "100"
+          system_scaling_maxqueuemessagecount: "100"
+        ports:
+          - 8080:8080
+          - 55555:55555
+          - 1883:1883
+    defaults:
+      run:
+        working-directory: demo
+    env:
+      SOLACE_HOST: tcp://127.0.0.1:55555
+      SOLACE_SEMP_URL: http://127.0.0.1:8080
+      SOLACE_VPN: default
+      SOLACE_ADMIN_USER: admin
+      SOLACE_ADMIN_PASSWORD: admin
+      SOLACE_PUBLISHER_USERNAME: ssa-publisher
+      SOLACE_PUBLISHER_PASSWORD: publisher-pass
+      SOLACE_SUBSCRIBER_USERNAME: ssa-subscriber
+      SOLACE_SUBSCRIBER_PASSWORD: subscriber-pass
+      SOLACE_TEST_MQTT_URL: mqtt://127.0.0.1:1883
+      SOLACE_DOTENV_PATH: /tmp/no-ci.env
+      SOLACE_TEST_PUBLISHER_HOST: tcp://127.0.0.1:16655
+      SOLACE_TEST_PUBLISHER_SEMP: http://127.0.0.1:18081
+      SOLACE_TEST_OPERATOR_HOST: tcp://127.0.0.1:16755
+      SOLACE_TEST_OPERATOR_SEMP: http://127.0.0.1:18082
+      SOLACE_TEST_BROKER_PASSWORD: admin
+      SOLACE_TEST_NOAUTH_HOST: tcp://127.0.0.1:16855
+      SOLACE_TEST_NOAUTH_SEMP: http://127.0.0.1:18083
+      SOLACE_TEST_NOAUTH_PASSWORD: admin
+      SOLACE_TEST_STOP_HOST: tcp://127.0.0.1:16555
+      SOLACE_TEST_STOP_SEMP: http://127.0.0.1:18084
+      SOLACE_TEST_STOP_CONTAINER: solace-visual-repro
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python packages
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Start disposable brokers
+        run: |
+          set -euo pipefail
+          image=solace/solace-pubsub-standard@sha256:4891915f6882a8329ad662ff6638cb6ea14e4603447f2fd26e73f10e4adc55af
+          start_broker() {
+            local name="$1" smf="$2" semp="$3"
+            docker rm -f "$name" >/dev/null 2>&1 || true
+            docker run -d --name "$name" \
+              --shm-size=1g \
+              --ulimit nofile=2448:1048576 \
+              -p "127.0.0.1:${smf}:55555" \
+              -p "127.0.0.1:${semp}:8080" \
+              -e username_admin_globalaccesslevel=admin \
+              -e username_admin_password=admin \
+              -e system_scaling_maxconnectioncount=100 \
+              -e system_scaling_maxqueuemessagecount=100 \
+              "$image"
+          }
+          start_broker solace-ci-publisher 16655 18081
+          start_broker solace-ci-operator 16755 18082
+          start_broker solace-ci-noauth 16855 18083
+          start_broker solace-visual-repro 16555 18084
+      - name: Wait for SEMP and provision the lab
+        run: |
+          python - << 'PY'
+          import subprocess
+          import time
+          import urllib.request
+          from solace.messaging.config.solace_properties import transport_layer_properties
+          from solace_demo.config import LabConfig, load_config
+          from solace_demo.messaging import connect, disconnect
+          from solace_demo.provision import provision, wait_until_ready
+
+          def semp_up(url):
+              request = urllib.request.Request(url.rstrip("/") + "/SEMP/v2/config/about")
+              token = __import__("base64").b64encode(b"admin:admin").decode("ascii")
+              request.add_header("Authorization", "Basic " + token)
+              try:
+                  with urllib.request.urlopen(request, timeout=3) as response:
+                      return response.status == 200
+              except Exception:
+                  return False
+
+          def messaging_answers(host):
+              config = LabConfig(
+                  host=host,
+                  vpn="default",
+                  semp_url="http://127.0.0.1:9",
+                  admin_user="admin",
+                  admin_password="admin",
+                  publisher_username="default",
+                  publisher_password="",
+                  subscriber_username="default",
+                  subscriber_password="",
+                  allow_remote=False,
+              )
+              try:
+                  service = connect(config, "default", "", {
+                      transport_layer_properties.CONNECTION_RETRIES: 0,
+                      transport_layer_properties.RECONNECTION_ATTEMPTS: 0,
+                      transport_layer_properties.CONNECTION_ATTEMPTS_TIMEOUT: 3000,
+                  })
+              except Exception as exc:
+                  text = str(exc)
+                  if "SERVICE_UNAVAILABLE" in text or "Not ready" in text or "Connection refused" in text:
+                      return False, text[:180]
+                  return True, text[:180]
+              disconnect([service])
+              return True, "connected"
+
+          extras = [
+              ("solace-ci-publisher", "tcp://127.0.0.1:16655", "http://127.0.0.1:18081"),
+              ("solace-ci-operator", "tcp://127.0.0.1:16755", "http://127.0.0.1:18082"),
+              ("solace-ci-noauth", "tcp://127.0.0.1:16855", "http://127.0.0.1:18083"),
+              ("solace-visual-repro", "tcp://127.0.0.1:16555", "http://127.0.0.1:18084"),
+          ]
+          for name, host, semp in extras:
+              ready = False
+              detail = "no attempt"
+              for _ in range(36):
+                  up = semp_up(semp)
+                  answered, detail = (False, "SEMP down") if not up else messaging_answers(host)
+                  if up and answered:
+                      ready = True
+                      break
+                  time.sleep(5)
+              if not ready:
+                  state = subprocess.run(["docker", "inspect", "-f", "{{.State.Status}} oom={{.State.OOMKilled}}", name], capture_output=True, text=True)
+                  print(name, "state", state.stdout.strip() or state.stderr.strip())
+                  logs = subprocess.run(["docker", "logs", "--tail", "20", name], capture_output=True, text=True)
+                  print(logs.stdout[-800:])
+                  print(logs.stderr[-800:])
+                  raise SystemExit(f"{name} broker did not accept SMF: {detail}")
+              print(f"{name} broker ready ({detail})")
+          config = load_config()
+          wait_until_ready(config, attempts=40, pause_seconds=5)
+          for line in provision(config):
+              print(line)
+          PY
+      - name: Run the suite
+        run: python -m pytest -q -rs --tb=short
+      - name: Remove disposable brokers
+        if: always()
+        run: docker rm -f solace-ci-publisher solace-ci-operator solace-ci-noauth solace-visual-repro || true
+
+  cloud:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: demo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Python packages
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Run cloud tests when secrets are present
+        env:
+          SOLACE_CLOUD_HOST: ${{ secrets.SOLACE_CLOUD_HOST }}
+          SOLACE_CLOUD_VPN: ${{ secrets.SOLACE_CLOUD_VPN }}
+          SOLACE_CLOUD_SEMP_URL: ${{ secrets.SOLACE_CLOUD_SEMP_URL }}
+          SOLACE_CLOUD_ADMIN_USER: ${{ secrets.SOLACE_CLOUD_ADMIN_USER }}
+          SOLACE_CLOUD_ADMIN_PASSWORD: ${{ secrets.SOLACE_CLOUD_ADMIN_PASSWORD }}
+          SOLACE_PUBLISHER_USERNAME: ${{ secrets.SOLACE_PUBLISHER_USERNAME }}
+          SOLACE_PUBLISHER_PASSWORD: ${{ secrets.SOLACE_PUBLISHER_PASSWORD }}
+          SOLACE_SUBSCRIBER_USERNAME: ${{ secrets.SOLACE_SUBSCRIBER_USERNAME }}
+          SOLACE_SUBSCRIBER_PASSWORD: ${{ secrets.SOLACE_SUBSCRIBER_PASSWORD }}
+          SOLACE_PERMISSIONS_USERNAME: ${{ secrets.SOLACE_PERMISSIONS_USERNAME }}
+          SOLACE_PERMISSIONS_PASSWORD: ${{ secrets.SOLACE_PERMISSIONS_PASSWORD }}
+          SOLACE_PUBLISHER_TRUST_PEM: ${{ secrets.SOLACE_PUBLISHER_TRUST_PEM }}
+          SOLACE_PERMISSIONS_TRUST_PEM: ${{ secrets.SOLACE_PERMISSIONS_TRUST_PEM }}
+          SOLACE_CLOUD_MQTT_URL: ${{ secrets.SOLACE_CLOUD_MQTT_URL }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in SOLACE_CLOUD_HOST SOLACE_CLOUD_VPN SOLACE_CLOUD_SEMP_URL SOLACE_CLOUD_ADMIN_USER SOLACE_CLOUD_ADMIN_PASSWORD SOLACE_PUBLISHER_USERNAME SOLACE_PUBLISHER_PASSWORD SOLACE_SUBSCRIBER_USERNAME SOLACE_SUBSCRIBER_PASSWORD SOLACE_PUBLISHER_TRUST_PEM SOLACE_PERMISSIONS_TRUST_PEM; do
+            if [ -z "${!name}" ]; then
+              echo "Missing secret ${name}."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Cloud secrets are unset. The cloud tests were not run."
+            exit 0
+          fi
+          python - << 'PY'
+          import os
+          from pathlib import Path
+
+          def normalize(text: str) -> str:
+              text = text.replace("\r\n", "\n").replace("\r", "\n")
+              if "\\n" in text and text.count("\n") < text.count("\\n"):
+                  text = text.replace("\\n", "\n")
+              return text.strip() + "\n"
+
+          def certificates(text: str) -> list:
+              begin = "-----BEGIN CERTIFICATE-----"
+              end = "-----END CERTIFICATE-----"
+              found = []
+              rest = text
+              while begin in rest and end in rest:
+                  start = rest.index(begin)
+                  stop = rest.index(end, start) + len(end)
+                  found.append(rest[start:stop] + "\n")
+                  rest = rest[stop:]
+              return found
+
+          def write_store(name: str, raw: str, directory: Path, bundle: Path | None) -> None:
+              certs = certificates(normalize(raw))
+              if not certs:
+                  raise SystemExit(name + " trust PEM contained no certificates")
+              directory.mkdir(parents=True, exist_ok=True)
+              for index, cert in enumerate(certs):
+                  path = directory / ("cert-" + str(index) + ".pem")
+                  path.write_text(cert, encoding="utf-8")
+                  path.chmod(0o644)
+              directory.chmod(0o755)
+              if bundle is not None:
+                  bundle.write_text("".join(certs), encoding="utf-8")
+                  bundle.chmod(0o644)
+              print(name + " trust store files: " + str(len(certs)))
+
+          root = Path("/tmp/solace-ci-trust")
+          write_store("publisher", os.environ["SOLACE_PUBLISHER_TRUST_PEM"], root / "publisher", root / "mqtt-ca.pem")
+          write_store("permissions", os.environ["SOLACE_PERMISSIONS_TRUST_PEM"], root / "permissions", None)
+          PY
+          export SOLACE_ALLOW_REMOTE=1
+          export SOLACE_HOST="$SOLACE_CLOUD_HOST"
+          export SOLACE_VPN="$SOLACE_CLOUD_VPN"
+          export SOLACE_SEMP_URL="$SOLACE_CLOUD_SEMP_URL"
+          export SOLACE_ADMIN_USER="$SOLACE_CLOUD_ADMIN_USER"
+          export SOLACE_ADMIN_PASSWORD="$SOLACE_CLOUD_ADMIN_PASSWORD"
+          export SOLACE_PUBLISHER_TRUST_STORE=/tmp/solace-ci-trust/publisher
+          export SOLACE_PERMISSIONS_TRUST_STORE=/tmp/solace-ci-trust/permissions
+          export SOLACE_MQTT_TRUST_FILE=/tmp/solace-ci-trust/mqtt-ca.pem
+          export SOLACE_DOTENV_PATH=/tmp/no-ci.env
+          if [ -n "${SOLACE_CLOUD_MQTT_URL}" ]; then
+            export SOLACE_TEST_MQTT_URL="$SOLACE_CLOUD_MQTT_URL"
+          fi
+          set +e
+          python -m pytest -q -rs --tb=short tests/test_permissions_demo.py tests/test_mqtt_weather.py
+          status=$?
+          set -e
+          python - << 'PY'
+          from solace_demo.config import load_config
+          from solace_demo.provision import assert_shared_clients_unchanged
+          config = load_config()
+          assert_shared_clients_unchanged(config)
+          print("shared clients still on default/default")
+          PY
+          exit "$status"

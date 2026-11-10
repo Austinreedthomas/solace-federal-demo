@@ -1,0 +1,10 @@
+[project]
+name = "solace-ssa-demo"
+version = "0.1.0"
+description = "Local synthetic satellite-alert demo for one Solace software broker."
+requires-python = ">=3.9"
+dependencies = ["solace-pubsubplus==1.11.0", "paho-mqtt==2.1.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Primary Operator</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/operator-status.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Primary Operator</h1>
+    <nav class="sitenav" aria-label="Demo pages">
+      <a data-role="publisher" href="/publisher">Publisher</a>
+      <a data-role="operators" href="/operator" aria-current="page">Primary Operator</a>
+      <a data-role="operators" href="/restricted-operator">Restricted Operator</a>
+    </nav>
+    <p class="identity" id="identity">Checking the configured operator client…</p>
+    <p class="badge" id="mode">Checking the Solace session…</p>
+  </header>
+  <main>
+    <div class="status">
+      <div>
+        <div class="pill" id="listen">Not listening</div>
+        <div class="error" id="listen-error"></div>
+        <div class="refresh-note" id="refresh-note"></div>
+        <div class="queue" id="queue">Queue depth: not reported</div>
+      </div>
+      <div class="row">
+        <button type="button" id="connect" aria-disabled="false">Connect</button>
+        <button class="warn" type="button" id="disconnect" disabled aria-disabled="true">Disconnect</button>
+      </div>
+    </div>
+    <div class="columns">
+      <section class="panel">
+        <div class="card-head">
+          <h2>Any site · launch alerts</h2>
+          <button type="button" class="clear" data-clear="launch-any-site">Clear</button>
+        </div>
+        <p class="lead">This operator asked for every launch alert.</p>
+        <div class="feed" id="launch-any-site"></div>
+      </section>
+      <section class="panel">
+        <div class="card-head">
+          <h2>Ground 1 · object 25544</h2>
+          <button type="button" class="clear" data-clear="one-object-ground1-25544">Clear</button>
+        </div>
+        <p class="lead">This operator asked for every event about object 25544 at ground 1, including the ground 1 heartbeat and the queued launch alert for this object.</p>
+        <div class="feed" id="one-object-ground1-25544"></div>
+      </section>
+    </div>
+    <section class="panel" id="weather-panel" hidden>
+      <h2>Weather</h2>
+      <p class="lead" id="weather-note">Received with SMF. The publisher used MQTT.</p>
+      <div class="feed" id="weather-ground1"></div>
+    </section>
+  </main>
+  <script>
+    const feeds = ["launch-any-site", "one-object-ground1-25544", "weather-ground1"];
+    function ground1Object(topic) {
+      const parts = String(topic || "").split("/").filter((part) => part);
+      return parts.length >= 5 && parts[2] === "ground1" && parts[4] === "25544";
+    }
+    function shownOn(event) {
+      if (event.feed === "broker-queue" || event.delivery === "queued") {
+        return ground1Object(event.topic) ? "one-object-ground1-25544" : "";
+      }
+      return event.feed;
+    }
+    function deliveryTag(event) {
+      return event.delivery === "queued" || event.feed === "broker-queue" ? "Queued" : "Direct";
+    }
+    function card(event, current) {
+      const backlog = deliveryTag(event) === "Queued" && event.origin === "already-queued";
+      const node = document.createElement("article");
+      node.className = "card" + (current && !backlog ? "" : " history");
+      node.dataset.alertId = event.alertId;
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.textContent = deliveryTag(event);
+      const title = document.createElement("h3");
+      title.textContent = event.alertText || "Alert";
+      const id = document.createElement("div");
+      id.className = "id";
+      id.textContent = event.alertId || "";
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = event.topic || "";
+      node.append(tag, title, id, meta);
+      if (backlog || !current) {
+        const earlier = document.createElement("div");
+        earlier.className = "meta";
+        earlier.textContent = backlog ? "Already on this console's queue" : "Earlier";
+        node.appendChild(earlier);
+      }
+      return node;
+    }
+    function render(events) {
+      feeds.forEach((feed) => {
+        const host = document.getElementById(feed);
+        const mine = events.filter((event) => shownOn(event) === feed);
+        host.replaceChildren();
+        if (!mine.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No alert received from the broker.";
+          host.appendChild(empty);
+          return;
+        }
+        const newest = mine[mine.length - 1];
+        host.appendChild(card(newest, true));
+        const older = mine.slice(0, -1).reverse();
+        older.forEach((event) => host.appendChild(card(event, false)));
+      });
+    }
+    const poller = OperatorStatus.createPoller();
+    let lastGood = null;
+    let stateAbort = null;
+    function applyButtonFlags(connectDisabled, disconnectDisabled) {
+      const connect = document.getElementById("connect");
+      const disconnect = document.getElementById("disconnect");
+      connect.disabled = !!connectDisabled;
+      disconnect.disabled = !!disconnectDisabled;
+      connect.setAttribute("aria-disabled", connect.disabled ? "true" : "false");
+      disconnect.setAttribute("aria-disabled", disconnect.disabled ? "true" : "false");
+    }
+    function setListenButtons(mode) {
+      if (mode === "busy") {
+        applyButtonFlags(true, true);
+        return;
+      }
+      applyButtonFlags(false, true);
+    }
+    function applyState(state, extraNote) {
+      lastGood = state;
+      const listen = document.getElementById("listen");
+      const client = state.primaryOperatorClient || "not configured";
+      const broker = state.operatorBrokerLabel || "Solace broker";
+      document.getElementById("identity").textContent = "Client " + client;
+      let headline = "Not receiving. Configured target: " + broker;
+      if (state.operatorConnected) headline = "Receiving from " + broker;
+      else if (state.brokerConnected) headline = "Not receiving. The Solace session to " + broker + " is still up.";
+      document.getElementById("mode").textContent = headline;
+      document.getElementById("refresh-note").textContent = "";
+      listen.className = "pill";
+      if (state.operatorConnected) {
+        listen.textContent = "Receiving";
+      } else if (state.receiverFailed && state.brokerConnected) {
+        listen.textContent = "Receiver stopped";
+      } else {
+        listen.textContent = "Not receiving";
+      }
+      const queue = document.getElementById("queue");
+      if (!state.queueConfigured) {
+        queue.textContent = "No queue is configured.";
+      } else if (typeof state.queueDepth !== "number") {
+        queue.textContent = "Queue count unavailable.";
+      } else {
+        queue.textContent = `Queue holding ${state.queueDepth}`;
+      }
+      const reason = extraNote || ((state.receiverFailed || !state.brokerConnected) ? (state.lastError || "") : "");
+      document.getElementById("listen-error").textContent = reason;
+      applyButtonFlags(state.connectDisabled, state.disconnectDisabled);
+      const weather = document.getElementById("weather-panel");
+      if (weather) weather.hidden = !(state.weatherEnabled || state.weatherProblem);
+      const weatherNote = document.getElementById("weather-note");
+      if (weatherNote && state.weatherTopic) {
+        weatherNote.textContent = "SMF subscription for " + state.weatherTopic + ". The publisher used MQTT QoS 0.";
+      }
+      render(state.events || []);
+    }
+    function showUnverified(extraNote) {
+      const copy = OperatorStatus.UNVERIFIED;
+      document.getElementById("mode").textContent = copy.headline;
+      document.getElementById("listen").className = "pill";
+      document.getElementById("listen").textContent = copy.pill;
+      document.getElementById("refresh-note").textContent = lastGood
+        ? copy.note
+        : "No Solace status has been received yet.";
+      document.getElementById("queue").textContent = copy.queue;
+      document.getElementById("listen-error").textContent = extraNote || "";
+      if (!poller.isListenBusy()) applyButtonFlags(false, true);
+    }
+    async function refresh(extraNote) {
+      const ticket = poller.startRefresh();
+      if (!ticket) return;
+      const controller = new AbortController();
+      stateAbort = controller;
+      const timer = setTimeout(() => controller.abort(), poller.timeoutMs);
+      let state = null;
+      let ok = false;
+      try {
+        const response = await fetch("/api/state", { signal: controller.signal });
+        if (!response.ok) throw new Error("status");
+        state = await response.json();
+        ok = true;
+      } catch (err) {
+        ok = false;
+      } finally {
+        clearTimeout(timer);
+        if (stateAbort === controller) stateAbort = null;
+      }
+      const outcome = poller.finishRefresh(ticket, ok);
+      if (outcome === "apply") applyState(state, extraNote);
+      else if (outcome === "unverified") showUnverified(extraNote);
+    }
+    async function listen(action) {
+      const button = document.getElementById(action === "connect" ? "connect" : "disconnect");
+      if (poller.isListenBusy() || button.disabled) return;
+      poller.beginListen();
+      if (stateAbort) stateAbort.abort();
+      setListenButtons("busy");
+      let extra = "";
+      try {
+        const response = await fetch("/api/listen", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action })
+        });
+        if (!response.ok) {
+          extra = "Server returned " + response.status + ".";
+        } else {
+          const body = await response.json();
+          if (body && body.ok === false) {
+            extra = body.customerText || "The broker did not confirm that change.";
+          }
+        }
+      } catch (err) {
+        extra = action === "connect"
+          ? "Connect was not confirmed. This page is not showing the console as receiving."
+          : "Disconnect was not confirmed. This page is not showing the console as receiving.";
+      } finally {
+        poller.endListen();
+      }
+      await refresh(extra);
+    }
+    async function clearCard(feed) {
+      let extra = "";
+      try {
+        const response = await fetch("/api/clear", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ feed })
+        });
+        if (!response.ok) extra = "Server returned " + response.status + ".";
+      } catch (err) {
+        extra = "The entries are still on this card.";
+      }
+      await refresh(extra);
+    }
+    document.getElementById("connect").addEventListener("click", () => listen("connect"));
+    document.getElementById("disconnect").addEventListener("click", () => listen("disconnect"));
+    document.querySelectorAll("button.clear").forEach((button) => {
+      button.addEventListener("click", () => clearCard(button.dataset.clear));
+    });
+    refresh();
+    setInterval(refresh, OperatorStatus.INTERVAL_MS);
+  </script>
+</body>
+</html>

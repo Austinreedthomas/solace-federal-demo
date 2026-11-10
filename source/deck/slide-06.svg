@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-label="Important alerts wait while a service is offline."><title>Important alerts wait while a service is offline.</title><defs><marker id="deck-arrow-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#087F83"/></marker><marker id="deck-arrow-6-n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#102E43"/></marker><marker id="deck-arrow-6-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#9A3B2E"/></marker></defs><rect x="0" y="0" width="1600" height="900" rx="0" fill="#FFFFFF" stroke="none" stroke-width="2" stroke-dasharray=""/><text x="80" y="91" fill="#087F83" font-family="Liberation Sans" font-size="22" font-weight="bold"><tspan x="80" dy="0">GUARANTEED DELIVERY</tspan></text><text x="80" y="160" fill="#102E43" font-family="Liberation Sans" font-size="46" font-weight="bold"><tspan x="80" dy="0">Important alerts wait while a service is offline.</tspan></text><text x="80" y="219" fill="#526A78" font-family="Liberation Sans" font-size="26" font-weight="normal"><tspan x="80" dy="0">Live updates can be missed. Important alerts wait in a queue until the service reconnects.</tspan></text><rect x="80" y="270" width="700" height="480" rx="8" fill="#F3F6F8" stroke="none" stroke-width="2" stroke-dasharray=""/><text x="430" y="330" fill="#102E43" font-family="Liberation Sans" font-size="28" font-weight="bold" text-anchor="middle"><tspan x="430" dy="0">Live updates</tspan></text><text x="430" y="365" fill="#087F83" font-family="Liberation Sans" font-size="22" font-weight="bold" text-anchor="middle"><tspan x="430" dy="0">Direct</tspan></text><svg x="235" y="382" width="340" height="217.22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 230" role="img" aria-label="Seated human ground operator at a computer whose screen says OFFLINE">
+<g stroke-linecap="round" stroke-linejoin="round">
+<!-- Seated human: profile, torso, arms, bent legs and chair; no floating-head icon. -->
+<path d="M37 101V165H99M35 165H105M49 165V205M92 165V205M29 207H109" fill="none" stroke="#526A78" stroke-width="5"/>
+<path d="M67 56Q84 45 94 62L97 73L103 79L94 83Q93 97 80 98L69 91Z" fill="#193F53" stroke="#102E43" stroke-width="2"/>
+<path d="M76 94V104L93 111L100 154L64 154L61 117Z" fill="#526A78" stroke="#102E43" stroke-width="2"/>
+<path d="M87 115L112 143L144 143" fill="none" stroke="#193F53" stroke-width="10"/>
+<path d="M69 153L106 157L124 189L151 199M96 155L118 157L143 186L167 187" fill="none" stroke="#193F53" stroke-width="12"/>
+<path d="M139 199H159M158 188H178" fill="none" stroke="#102E43" stroke-width="7"/>
+<!-- Large legible monitor, with only the actually received alert on screen. -->
+<rect x="133" y="30" width="217" height="121" rx="3" fill="#EDF6F5" stroke="#102E43" stroke-width="3"/>
+<rect x="141" y="38" width="201" height="103" fill="#193F53"/>
+<text x="154" y="68" fill="#8FE3DA" font-family="Liberation Sans" font-size="17" font-weight="bold">STATUS</text>
+<text x="154" y="105" fill="#FFFFFF" font-family="Liberation Sans" font-size="22" font-weight="bold">OFFLINE</text>
+<path d="M234 151V167M217 168H254M117 175H356M130 175V214M339 175V214" fill="none" stroke="#102E43" stroke-width="4"/>
+<path d="M147 166H197" stroke="#526A78" stroke-width="3"/>
+</g></svg><text x="430" y="630" fill="#526A78" font-family="Liberation Sans" font-size="22" font-weight="normal" text-anchor="middle"><tspan x="430" dy="0">Service offline</tspan></text><text x="430" y="669" fill="#526A78" font-family="Liberation Sans" font-size="23" font-weight="normal" text-anchor="middle"><tspan x="430" dy="0">Launch detected is not retained</tspan></text><text x="430" y="715" fill="#526A78" font-family="Liberation Sans" font-size="24" font-weight="bold" text-anchor="middle"><tspan x="430" dy="0">Missed while offline</tspan></text><rect x="820" y="270" width="700" height="480" rx="8" fill="#F3F6F8" stroke="none" stroke-width="2" stroke-dasharray=""/><text x="1170" y="330" fill="#102E43" font-family="Liberation Sans" font-size="28" font-weight="bold" text-anchor="middle"><tspan x="1170" dy="0">Important alerts</tspan></text><text x="1170" y="365" fill="#087F83" font-family="Liberation Sans" font-size="22" font-weight="bold" text-anchor="middle"><tspan x="1170" dy="0">Guaranteed · local queue</tspan></text><svg x="835" y="395" width="235" height="150.14" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 230" role="img" aria-label="Seated human ground operator at a computer whose screen says OFFLINE">
+<g stroke-linecap="round" stroke-linejoin="round">
+<!-- Seated human: profile, torso, arms, bent legs and chair; no floating-head icon. -->
+<path d="M37 101V165H99M35 165H105M49 165V205M92 165V205M29 207H109" fill="none" stroke="#526A78" stroke-width="5"/>
+<path d="M67 56Q84 45 94 62L97 73L103 79L94 83Q93 97 80 98L69 91Z" fill="#193F53" stroke="#102E43" stroke-width="2"/>
+<path d="M76 94V104L93 111L100 154L64 154L61 117Z" fill="#526A78" stroke="#102E43" stroke-width="2"/>
+<path d="M87 115L112 143L144 143" fill="none" stroke="#193F53" stroke-width="10"/>
+<path d="M69 153L106 157L124 189L151 199M96 155L118 157L143 186L167 187" fill="none" stroke="#193F53" stroke-width="12"/>
+<path d="M139 199H159M158 188H178" fill="none" stroke="#102E43" stroke-width="7"/>
+<!-- Large legible monitor, with only the actually received alert on screen. -->
+<rect x="133" y="30" width="217" height="121" rx="3" fill="#EDF6F5" stroke="#102E43" stroke-width="3"/>
+<rect x="141" y="38" width="201" height="103" fill="#193F53"/>
+<text x="154" y="68" fill="#8FE3DA" font-family="Liberation Sans" font-size="17" font-weight="bold">STATUS</text>
+<text x="154" y="105" fill="#FFFFFF" font-family="Liberation Sans" font-size="22" font-weight="bold">OFFLINE</text>
+<path d="M234 151V167M217 168H254M117 175H356M130 175V214M339 175V214" fill="none" stroke="#102E43" stroke-width="4"/>
+<path d="M147 166H197" stroke="#526A78" stroke-width="3"/>
+</g></svg><text x="955" y="566" fill="#526A78" font-family="Liberation Sans" font-size="20" font-weight="normal" text-anchor="middle"><tspan x="955" dy="0">Service offline</tspan></text><rect x="1100" y="405" width="370" height="100" rx="4" fill="#EDF6F5" stroke="#087F83" stroke-width="2" stroke-dasharray=""/><text x="1285" y="441" fill="#087F83" font-family="Liberation Sans" font-size="26" font-weight="bold" text-anchor="middle"><tspan x="1285" dy="0">Solace queue</tspan></text><text x="1285" y="479" fill="#102E43" font-family="Liberation Sans" font-size="23" font-weight="normal" text-anchor="middle"><tspan x="1285" dy="0">Holds Launch detected</tspan></text><path d="M1285 516V549" fill="none" stroke="#087F83" stroke-width="3" stroke-dasharray="" marker-end="url(#deck-arrow-6)"/><svg x="1180" y="550" width="275" height="175.7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 230" role="img" aria-label="Seated human ground operator reading Launch detected on a large computer screen">
+<g stroke-linecap="round" stroke-linejoin="round">
+<!-- Seated human: profile, torso, arms, bent legs and chair; no floating-head icon. -->
+<path d="M37 101V165H99M35 165H105M49 165V205M92 165V205M29 207H109" fill="none" stroke="#526A78" stroke-width="5"/>
+<path d="M67 56Q84 45 94 62L97 73L103 79L94 83Q93 97 80 98L69 91Z" fill="#193F53" stroke="#102E43" stroke-width="2"/>
+<path d="M76 94V104L93 111L100 154L64 154L61 117Z" fill="#526A78" stroke="#102E43" stroke-width="2"/>
+<path d="M87 115L112 143L144 143" fill="none" stroke="#193F53" stroke-width="10"/>
+<path d="M69 153L106 157L124 189L151 199M96 155L118 157L143 186L167 187" fill="none" stroke="#193F53" stroke-width="12"/>
+<path d="M139 199H159M158 188H178" fill="none" stroke="#102E43" stroke-width="7"/>
+<!-- Large legible monitor, with only the actually received alert on screen. -->
+<rect x="133" y="30" width="217" height="121" rx="3" fill="#EDF6F5" stroke="#102E43" stroke-width="3"/>
+<rect x="141" y="38" width="201" height="103" fill="#193F53"/>
+<text x="154" y="68" fill="#8FE3DA" font-family="Liberation Sans" font-size="17" font-weight="bold">ALERT</text>
+<text x="154" y="105" fill="#FFFFFF" font-family="Liberation Sans" font-size="22" font-weight="bold">Launch detected</text>
+<path d="M234 151V167M217 168H254M117 175H356M130 175V214M339 175V214" fill="none" stroke="#102E43" stroke-width="4"/>
+<path d="M147 166H197" stroke="#526A78" stroke-width="3"/>
+</g></svg><text x="980" y="668" fill="#102E43" font-family="Liberation Sans" font-size="21" font-weight="bold" text-anchor="middle"><tspan x="980" dy="0">After reconnect</tspan></text><path d="M1080 660H1170" fill="none" stroke="#087F83" stroke-width="3" stroke-dasharray="" marker-end="url(#deck-arrow-6)"/><text x="1285" y="742" fill="#102E43" font-family="Liberation Sans" font-size="21" font-weight="bold" text-anchor="middle"><tspan x="1285" dy="0">Delivered after reconnect</tspan></text><rect x="100" y="765" width="102" height="34" rx="17" fill="#D9F2EF" stroke="#087F83" stroke-width="2" stroke-dasharray=""/><text x="151" y="788" fill="#087F83" font-family="Liberation Sans" font-size="16" font-weight="bold" text-anchor="middle"><tspan x="151" dy="0">DEMO 3</tspan></text><path d="M80 819H1520" fill="none" stroke="#526A78" stroke-width="1" stroke-dasharray=""/><text x="1468" y="856" fill="#526A78" font-family="Liberation Sans" font-size="22" font-weight="normal"><tspan x="1468" dy="0">06</tspan></text></svg>
