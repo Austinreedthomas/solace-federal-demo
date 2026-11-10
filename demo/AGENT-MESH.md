@@ -6,7 +6,7 @@ The Publisher and Primary Operator pages run the same Disconnect / guaranteed-se
 
 The Activity panel draws the hand-off: User → OrchestratorAgent → Operations Watch → `get_operator_incident_report`.
 
-Presenter steps: [docs/DEMO-QUICK-REFERENCE.md](../docs/DEMO-QUICK-REFERENCE.md#bonus-agent-mesh-observes-the-primary-operator). Agent files: [agent_mesh/sam_bonus/](agent_mesh/sam_bonus/). Silent review recording (1:33): [MP4](https://github.com/Austinreedthomas/solace-federal-demo/releases/download/demo-videos-20261109/demo4-ops-watch.mp4).
+Presenter steps: [docs/DEMO-QUICK-REFERENCE.md](../docs/DEMO-QUICK-REFERENCE.md#bonus-agent-mesh-observes-the-primary-operator). Agent files: [agent_mesh/sam_bonus/](agent_mesh/sam_bonus/). Silent review recording (1:33): [MP4](https://github.com/Austinreedthomas/solace-federal-demo/releases/download/v1.0/demo4-ops-watch.mp4).
 
 ## What you need
 

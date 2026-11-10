@@ -97,7 +97,7 @@ Hold on the page so all three results are visible together.
 <a id="bonus-agent-mesh-observes-the-primary-operator"></a>
 <a id="bonus-agent-mesh-outage-and-recovery"></a>
 
-Silent review recording (1:33): [MP4](https://github.com/Austinreedthomas/solace-federal-demo/releases/download/demo-videos-20261109/demo4-ops-watch.mp4).
+Silent review recording (1:33): [MP4](https://github.com/Austinreedthomas/solace-federal-demo/releases/download/v1.0/demo4-ops-watch.mp4).
 
 **Purpose:** After the same Disconnect / guaranteed-send / Connect sequence used in Demo 3, a government customer asks, in plain English, what happened overnight to the primary operator and whether anything was missed. Operations Watch answers from a read-only view of that operator's disconnect window and guaranteed queue.
 
