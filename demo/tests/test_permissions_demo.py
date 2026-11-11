@@ -335,10 +335,13 @@ def test_pages_include_two_broker_path_strips():
     restricted = (root / "restricted-operator.html").read_text(encoding="utf-8")
     css = (root / "app.css").read_text(encoding="utf-8")
     assert ".path-strip" in css
+    assert ".path-strip-label" in css
     for page in (publisher, operator, restricted):
         assert 'id="path-strip"' in page
         assert "path-strip" in page and "hidden" in page
         assert 'state.mode !== "split-client"' in page
+        assert "Message path" in page
+        assert 'class="path-strip-label"' in page
     assert "SMF (alerts, heartbeat)" in publisher
     assert "MQTT (weather)" in publisher
     assert "Solace Cloud broker" in publisher

@@ -170,11 +170,21 @@ body.restricted .identity {
 }
 
 .path-strip {
-  margin: 8px 0 2px;
-  padding: 0;
+  margin: 12px 0 6px;
+  padding: 10px 0 2px;
   max-width: 1100px;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
 }
 .path-strip[hidden] { display: none; }
+.path-strip-label {
+  margin: 0 0 7px;
+  padding: 0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(215, 244, 241, 0.7);
+}
 .path-flow {
   display: flex;
   flex-wrap: wrap;
@@ -192,13 +202,14 @@ body.restricted .identity {
   justify-content: center;
 }
 .path-node {
-  border: 1px solid #8fe3da;
-  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-left: 2px solid rgba(143, 227, 218, 0.75);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
   color: #fff;
-  border-radius: 8px;
-  padding: 7px 10px;
+  padding: 6px 10px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   text-align: center;
 }
@@ -224,8 +235,14 @@ body.restricted .identity {
   line-height: 1;
   font-weight: 400;
 }
+body.restricted .path-strip {
+  border-top-color: rgba(240, 215, 196, 0.28);
+}
+body.restricted .path-strip-label {
+  color: rgba(240, 215, 196, 0.75);
+}
 body.restricted .path-node {
-  border-color: #f0d7c4;
+  border-left-color: rgba(240, 215, 196, 0.75);
 }
 body.restricted .path-edge,
 body.restricted .path-arrow {
@@ -235,7 +252,7 @@ body.restricted .path-mark {
   color: #f3d48a;
 }
 @media (max-width: 800px) {
-  .path-node { font-size: 12px; padding: 6px 8px; }
+  .path-node { font-size: 12px; padding: 5px 8px; }
   .path-edge { min-width: 6.5em; padding: 0 6px; }
 }
 
