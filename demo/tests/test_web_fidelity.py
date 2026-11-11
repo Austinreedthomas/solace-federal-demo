@@ -33,6 +33,8 @@ def test_direct_send_is_not_described_as_a_broker_ack():
     assert direct["sendReturned"] is True
     assert direct["brokerAck"] is False
     assert direct["customerText"] == DIRECT_CUSTOMER_TEXT
+    assert "Check the operator for this ID." in direct["customerText"]
+    assert "Direct messages get no broker ACK" in direct["customerText"]
     assert "The broker acknowledged this alert." not in direct["customerText"]
     assert "brokerAccepted" not in direct
     assert guaranteed["outcome"] == "acked"

@@ -89,8 +89,8 @@ WEB_TRANSPORT = {
 }
 
 DIRECT_CUSTOMER_TEXT = (
-    "Sent. The operator shows this alert when the same id arrives. "
-    "A broker ACK is a separate result."
+    "Sent. Check the operator for this ID. "
+    "Direct messages get no broker ACK; Guaranteed sends show the broker's ACK separately."
 )
 GUARANTEED_CUSTOMER_TEXT = (
     "The broker acknowledged this alert. "
