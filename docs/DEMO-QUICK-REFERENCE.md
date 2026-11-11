@@ -12,7 +12,7 @@ Four short demos. Each one has a purpose, a setup check, steps to perform, and w
 
 The Ground selector on the Publisher sets the site for **Send launch alert**, **Send heartbeat**, **Send a direct alert**, and **Send a guaranteed launch alert**. The Ground 1 card shows Ground 1 alerts for object 25544.
 
-Topics follow the six-level structure described in [Topic structure](../README.md#topic-structure).
+Connection hosts, protocols, and logins are listed in [Connections](../README.md#connections). Topics follow the six-level structure described in [Topic structure](../README.md#topic-structure).
 
 ## Pre-demo checklist
 

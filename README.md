@@ -27,6 +27,30 @@ flowchart LR
   Cloud --> Rest[Restricted Operator]
 ```
 
+## Connections
+
+The table lists each connection this lab uses. Replace the placeholders with values from your brokers, and keep real hosts and passwords in a local env file. Variable lists and setup steps are in [demo/SPLIT-CLIENT.md](demo/SPLIT-CLIENT.md), [demo/MQTT-WEATHER.md](demo/MQTT-WEATHER.md), [demo/PERMISSIONS-DEMO.md](demo/PERMISSIONS-DEMO.md), [demo/AGENT-MESH.md](demo/AGENT-MESH.md), and [deploy/vm-publisher/](deploy/vm-publisher/).
+
+The default single-broker lab uses the local SMF rows and the browser row. The optional two-broker path, used in the recorded walkthroughs, adds the Cloud publisher, MQTT weather, static bridge, and Restricted Operator rows. The Agent Mesh bonus adds the last two rows.
+
+| Connection | Connects to | Protocol | Host:port | Login | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| Browser | Python web app | HTTP | `http://127.0.0.1:8877` (`SOLACE_WEB_PORT`) | — | Demo pages at `/publisher`, `/operator`, and `/restricted-operator`. The browser does not connect to a Solace broker. |
+| Publisher (default lab) | Local Solace broker | SMF | `tcp://127.0.0.1:55554` (`SOLACE_HOST`) | `ssa-publisher` (`SOLACE_PUBLISHER_USERNAME`) | Launch alerts, heartbeats, and guaranteed alerts on the single-broker lab. |
+| Primary Operator | Local Solace broker | SMF | `tcp://127.0.0.1:55554` (`SOLACE_HOST`, or `SOLACE_OPERATOR_HOST` on the two-broker path) | `ssa-subscriber` (`SOLACE_SUBSCRIBER_USERNAME`), or `SOLACE_OPERATOR_USERNAME` | Receives matching Direct and Guaranteed events, including weather, over SMF. |
+| Publisher, SMF (two-broker path) | Solace Cloud broker | SMF over TLS | `tcps://<cloud-host>:55443` (`SOLACE_PUBLISHER_HOST`) | `<publisher-client>` (`SOLACE_PUBLISHER_USERNAME`) | Launch alerts, heartbeats, and guaranteed alerts. |
+| Publisher, MQTT weather | Broker in `SOLACE_MQTT_URL` | MQTT over TLS | `mqtts://<cloud-host>:8883` (`SOLACE_MQTT_URL`) | `<client>` (`SOLACE_MQTT_USERNAME`) | Optional simulated weather (`SOLACE_MQTT_WEATHER=1`). One QoS 0 reading per button press. |
+| Static bridge `to-cloud-unclass` | Solace Cloud broker, initiated from the local broker | SMF over TLS (Message VPN bridge) | `<cloud-host>:55443` | A Cloud client username you create for the bridge | Direct traffic for remote subscription `ssa/>`. Also consumes Cloud queue `queue-cloud-guaranteed`. |
+| Restricted Operator | Solace Cloud broker | SMF over TLS | `tcps://<cloud-host>:55443` (from `SOLACE_PERMISSIONS_CONFIG`) | Example: `client-cloud-permissions-demo` | Demo 2 permissions client, assigned to ACL profile `acl-cloud-permissions-demo`. |
+| Agent Mesh (`sam-bonus-mesh`) | Local Solace broker | SMF | `tcp://localhost:55554` (or the SMF port you published) | `sam-bonus-mesh` | Bonus Operations Watch agents, under namespace `ssa-bonus-mesh/`. |
+| Operations Watch, SEMP | Local Broker Manager | HTTP (SEMP) | `SOLACE_OPERATOR_SEMP_URL` (local default `http://127.0.0.1:8080`) | `OPS_WATCH_SEMP_USERNAME` (a read-only SEMP user) | Read-only queue depth and operator bind state. This monitor does not use the admin login. |
+
+The local broker container, started with `docker compose -p solace-ssa-demo up -d`, publishes two host ports on loopback: `SOLACE_SMF_PORT` (default 55554) to container SMF port 55555, and `SOLACE_SEMP_PORT` (default 8080) to Broker Manager and SEMP at container port 8080. Use the same host port numbers in `SOLACE_HOST` and `SOLACE_SEMP_URL`.
+
+55443 (SMF over TLS) and 8883 (MQTT over TLS) are Solace Cloud's standard TLS ports. See [Default Port Numbers](https://docs.solace.com/Admin/Default-Port-Numbers.htm). Loopback `mqtt://` is accepted for weather only on `127.0.0.1`, `localhost`, or `::1`.
+
+The example publisher service in [deploy/vm-publisher/](deploy/vm-publisher/) is the same Publisher process, served at `http://<host>:<port>/publisher`, and uses the Solace Cloud publisher and MQTT variables above.
+
 ## Topic structure
 
 Events in this demo use a six-level topic:
@@ -101,7 +125,7 @@ The two-broker and Agent Mesh setups are documented in [demo/README.md](demo/REA
 
 ## Configuration
 
-All connection settings use environment variables. The local lab reads `demo/.env`. Optional two-broker, permissions, and MQTT settings are listed (commented out) in `.env.example` and described in the demo docs. Point `SOLACE_DOTENV_PATH` at a separate file if you want to keep Cloud credentials out of the local-lab env file.
+All connection settings use environment variables. See [Connections](#connections) for a compact list of each session and its placeholders. The local lab reads `demo/.env`. Optional two-broker, permissions, and MQTT settings are listed (commented out) in `.env.example` and described in the demo docs. Point `SOLACE_DOTENV_PATH` at a separate file if you want to keep Cloud credentials out of the local-lab env file.
 
 ## Tests
 
