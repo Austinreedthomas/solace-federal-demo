@@ -364,6 +364,20 @@ def test_operator_cards_show_smf_subscriptions():
     assert "primaryOperatorPath" not in operator
 
 
+def test_operator_weather_publish_line_stays_neutral_until_a_reading_arrives():
+    import html
+    from pathlib import Path
+
+    operator = Path(__file__).resolve().parents[1].joinpath("web", "operator.html").read_text(encoding="utf-8")
+    shown = html.unescape(operator)
+    assert "The publisher sends MQTT QoS 0 readings to" in shown
+    assert "ssa/unclass/<ground>/weather/station-1/reading" in shown
+    assert "state.weatherTopic" not in operator
+    assert "weatherPublishNote" in operator
+    assert 'shownOn(event) === "weather-ground1"' in operator
+    assert "The publisher sent MQTT QoS 0 on " in operator
+
+
 def test_connection_verified_requires_the_sdk_session(tmp_path, monkeypatch):
     path = tmp_path / "client.json"
     path.write_text(json.dumps({

@@ -70,7 +70,7 @@
         <button type="button" class="clear" data-clear="weather-ground1">Clear</button>
       </div>
       <p class="lead" id="weather-note">SMF subscription <code class="topic">ssa/unclass/ground1/weather/&gt;</code> matches any Ground 1 weather station and reading. <code class="topic">&gt;</code> is all remaining levels.</p>
-      <p class="lead" id="weather-publish-topic"></p>
+      <p class="lead" id="weather-publish-topic">The publisher sends MQTT QoS 0 readings to <code class="topic">ssa/unclass/&lt;ground&gt;/weather/station-1/reading</code>.</p>
       <div class="feed" id="weather-ground1"></div>
     </section>
   </main>
@@ -132,6 +132,25 @@
         older.forEach((event) => host.appendChild(card(event, false)));
       });
     }
+    function weatherPublishNote(events) {
+      const pub = document.getElementById("weather-publish-topic");
+      if (!pub) return;
+      const received = (events || []).filter((event) => shownOn(event) === "weather-ground1" && event.topic);
+      pub.replaceChildren();
+      if (!received.length) {
+        pub.append("The publisher sends MQTT QoS 0 readings to ");
+        const code = document.createElement("code");
+        code.className = "topic";
+        code.textContent = "ssa/unclass/<ground>/weather/station-1/reading";
+        pub.append(code, ".");
+        return;
+      }
+      pub.append("The publisher sent MQTT QoS 0 on ");
+      const code = document.createElement("code");
+      code.className = "topic";
+      code.textContent = received[received.length - 1].topic;
+      pub.append(code, ".");
+    }
     const poller = OperatorStatus.createPoller();
     let lastGood = null;
     let stateAbort = null;
@@ -185,12 +204,9 @@
       applyButtonFlags(state.connectDisabled, state.disconnectDisabled);
       const weather = document.getElementById("weather-panel");
       if (weather) weather.hidden = !(state.weatherEnabled || state.weatherProblem);
-      const weatherNote = document.getElementById("weather-note");
-      if (weatherNote && state.weatherTopic) {
-        const pub = document.getElementById("weather-publish-topic");
-        if (pub) pub.textContent = "The publisher sent MQTT QoS 0 on " + state.weatherTopic + ".";
-      }
-      render(state.events || []);
+      const events = state.events || [];
+      weatherPublishNote(events);
+      render(events);
     }
     function showUnverified(extraNote) {
       const copy = OperatorStatus.UNVERIFIED;
