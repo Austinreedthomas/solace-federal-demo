@@ -1,7 +1,9 @@
 """Read-only SEMP helpers for the primary operator queue and client.
 
-Credentials come from ~/.solace-demo/private/split-client.env (or the
-environment) and are never logged or returned.
+Operator settings come from ~/.solace-demo/private/split-client.env (only the
+keys listed in _ENV_KEYS). Broker Manager credentials are a read-only
+management user from ~/.solace-demo/private/ops-watch-semp.env. Credentials
+are never logged or returned.
 """
 from __future__ import annotations
 
@@ -15,6 +17,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 ENV_PATH = Path.home() / ".solace-demo/private/split-client.env"
+SEMP_ENV_PATH = Path.home() / ".solace-demo/private/ops-watch-semp.env"
+# Only these keys are read from split-client.env; publisher and other
+# credentials in that file are never loaded into this process.
+_ENV_KEYS = (
+    "SOLACE_OPERATOR_HOST",
+    "SOLACE_OPERATOR_VPN",
+    "SOLACE_OPERATOR_USERNAME",
+    "SOLACE_OPERATOR_QUEUE",
+    "SOLACE_GUARANTEED_TOPIC_PREFIX",
+    "SOLACE_OPERATOR_SEMP_URL",
+)
+_SEMP_KEYS = ("OPS_WATCH_SEMP_USERNAME", "OPS_WATCH_SEMP_PASSWORD")
 VPN_DEFAULT = "default"
 
 # Message-list fields that can identify an alert. Anything else is dropped.
@@ -37,9 +51,14 @@ _MSG_KEEP = (
 
 
 def _load_env() -> None:
-    if not ENV_PATH.is_file():
+    _load_keys(ENV_PATH, _ENV_KEYS)
+    _load_keys(SEMP_ENV_PATH, _SEMP_KEYS)
+
+
+def _load_keys(path: Path, keys: tuple) -> None:
+    if not path.is_file():
         return
-    for raw in ENV_PATH.read_text().splitlines():
+    for raw in path.read_text().splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -50,7 +69,8 @@ def _load_env() -> None:
         val = val.strip()
         if len(val) >= 2 and val[0] == val[-1] and val[0] in ("'", '"'):
             val = val[1:-1]
-        os.environ.setdefault(key, val)
+        if key in keys:
+            os.environ.setdefault(key, val)
 
 
 def operator_queue_name() -> str:
@@ -78,8 +98,9 @@ def operator_vpn() -> str:
 def _semp_context() -> tuple[str, str, ssl.SSLContext]:
     _load_env()
     url = os.environ["SOLACE_OPERATOR_SEMP_URL"].rstrip("/")
-    user = os.environ["SOLACE_OPERATOR_SEMP_USERNAME"]
-    password = os.environ["SOLACE_OPERATOR_SEMP_PASSWORD"]
+    # Read-only management user; the admin login is never used here.
+    user = os.environ["OPS_WATCH_SEMP_USERNAME"]
+    password = os.environ["OPS_WATCH_SEMP_PASSWORD"]
     import base64
 
     tok = base64.b64encode(f"{user}:{password}".encode()).decode()

@@ -13,7 +13,7 @@ Presenter steps: [docs/DEMO-QUICK-REFERENCE.md](../docs/DEMO-QUICK-REFERENCE.md#
 - The local Solace broker from [README.md](README.md), with the Publisher and Primary Operator pages already running
 - [Solace Agent Mesh](https://docs.solace.com/Agent-Mesh/agent-mesh-home.htm) 1.28.8 in a project virtualenv (Python 3.12)
 - A Gemini API key for `gemini-3.8-flash`
-- Read-only SEMP access to the local broker so the monitor can see operator bind state and queue depth (the same `SOLACE_OPERATOR_SEMP_*` settings used by the Operators page; see [SPLIT-CLIENT.md](SPLIT-CLIENT.md))
+- A read-only Broker Manager (SEMP) user on the local broker so the monitor can see operator bind state and queue depth. On the software broker, create a CLI user with global access level `read-only` and Message VPN default access level `read-only`, and put its login in `~/.solace-demo/private/ops-watch-semp.env` (mode 600) as `OPS_WATCH_SEMP_USERNAME` and `OPS_WATCH_SEMP_PASSWORD`. The monitor does not use the admin login. The SEMP URL still comes from `SOLACE_OPERATOR_SEMP_URL` (see [SPLIT-CLIENT.md](SPLIT-CLIENT.md))
 
 ## Install the bonus project
 
@@ -22,7 +22,14 @@ Create an Agent Mesh project directory (any path you choose) with `proj/` for th
 - `configs/` and `src/` land inside `proj/` (or are referenced the way `start.sh` expects: it `cd`s to `proj/` beside the scripts)
 - the scripts `start.sh`, `stop.sh`, `queue-depth.sh`, and `reset-history.sh` sit next to `proj/` and `.venv/`
 
-Set the local broker connection for the agent (VPN `default`, client username `sam-bonus-mesh`, namespace `ssa-bonus-mesh/`, SMF `tcp://localhost:55554` or the SMF port you published). The monitor also reads the operator queue name and SEMP settings from the same env file the Operators page uses (`SOLACE_OPERATOR_QUEUE`, `SOLACE_OPERATOR_SEMP_URL`, and related values). The agent client needs a Direct subscribe permission for `ssa/unclass/>` and, if guaranteed alerts use a separate topic prefix, for that prefix as well.
+Set the local broker connection for the agent (VPN `default`, client username `sam-bonus-mesh`, namespace `ssa-bonus-mesh/`, SMF `tcp://localhost:55554` or the SMF port you published). The monitor reads only these operator keys from the same env file the Operators page uses: `SOLACE_OPERATOR_HOST`, `SOLACE_OPERATOR_VPN`, `SOLACE_OPERATOR_USERNAME`, `SOLACE_OPERATOR_QUEUE`, `SOLACE_GUARANTEED_TOPIC_PREFIX`, and `SOLACE_OPERATOR_SEMP_URL`. Publisher credentials in that file are never loaded. The SEMP username and password come from `ops-watch-semp.env`, as described above.
+
+Give `sam-bonus-mesh` its own profiles so the broker, not just the code, keeps the agents to their lane:
+
+- ACL profile `acl-sam-bonus-mesh`: client connect allow; publish default disallow with exception `ssa-bonus-mesh/>`; subscribe default disallow with exceptions `ssa-bonus-mesh/>`, `ssa/unclass/>`, and your guaranteed prefix (for example `ssa-guaranteed/unclass/>`); shared-subscription default disallow.
+- Client profile `cp-sam-bonus-mesh`: copy of `default` with bridge connections off, transacted sessions off, shared subscriptions off, guaranteed endpoint create limited to non-durable (Agent Mesh uses temporary queues), and limits of 64 connections, 64 endpoints, and 1000 subscriptions.
+
+Agent Mesh publishes and subscribes only under its namespace (`ssa-bonus-mesh/`), plus each client's own `#P2P` inbox, which the broker always allows. The operator queue keeps owner `default` and non-owner permission `no-access`, so the agent cannot bind or browse it over SMF.
 
 ## Model key
 
