@@ -127,6 +127,8 @@ The two-broker and Agent Mesh setups are documented in [demo/README.md](demo/REA
 
 All connection settings use environment variables. See [Connections](#connections) for a compact list of each session and its placeholders. The local lab reads `demo/.env`. Optional two-broker, permissions, and MQTT settings are listed (commented out) in `.env.example` and described in the demo docs. Point `SOLACE_DOTENV_PATH` at a separate file if you want to keep Cloud credentials out of the local-lab env file.
 
+Optional `SOLACE_CLIENT_NAME` sets the publisher SMF client name shown in Broker Manager. When it is unset, the Solace API auto-generates a name. Two publisher sessions that use the same client name will disconnect each other.
+
 ## Tests
 
 ```bash

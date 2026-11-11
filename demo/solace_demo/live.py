@@ -49,6 +49,7 @@ from solace_demo.messaging import (
     is_rejection,
     read_alert_id,
     safe_error,
+    with_publisher_client_name,
 )
 from solace_demo.semp import Semp, SempError
 from solace_demo.mqtt_weather import WEATHER_TEXT, load_weather, publish_weather, weather_body
@@ -420,6 +421,7 @@ class LiveLab:
             subscriber_password = self.split.operator.password if self.split.operator is not None else ""
             publisher_props = self.split.publisher.client_properties() if self.split.publisher is not None else WEB_TRANSPORT
             subscriber_props = self.split.operator.client_properties() if self.split.operator is not None else WEB_TRANSPORT
+        publisher_props = with_publisher_client_name(publisher_props)
         self._publisher = None
         self._subscriber = None
         if self.role != "operators":

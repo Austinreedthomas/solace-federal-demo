@@ -26,6 +26,7 @@ from solace_demo.messaging import (
     collect_direct,
     connect,
     disconnect,
+    with_publisher_client_name,
     is_rejection,
     publish_direct,
     publish_persistent,
@@ -63,7 +64,12 @@ def architecture_lines(host: str, vpn: str) -> list[str]:
 
 
 def _publisher(config: LabConfig):
-    return connect(config, config.publisher_username, config.publisher_password)
+    return connect(
+        config,
+        config.publisher_username,
+        config.publisher_password,
+        with_publisher_client_name(),
+    )
 
 
 def _subscriber(config: LabConfig):

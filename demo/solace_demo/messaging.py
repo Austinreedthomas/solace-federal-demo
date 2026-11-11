@@ -9,6 +9,7 @@ from typing import Iterable
 
 from solace.messaging.config.solace_properties import (
     authentication_properties,
+    client_properties,
     message_properties,
     service_properties,
     transport_layer_properties,
@@ -25,11 +26,24 @@ from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.topic_subscription import TopicSubscription
 
 from solace_demo.catalog import QUEUE_NAME
-from solace_demo.config import LabConfig
+from solace_demo.config import LabConfig, publisher_client_name
 
 
 class MessagingError(RuntimeError):
     pass
+
+
+def with_publisher_client_name(properties: dict | None = None) -> dict:
+    """Set solace.messaging.client.name when SOLACE_CLIENT_NAME is present.
+
+    When the variable is unset or blank, the property is omitted so the API
+    auto-generates a client name.
+    """
+    values = dict(properties or {})
+    name = publisher_client_name()
+    if name:
+        values[client_properties.NAME] = name
+    return values
 
 
 def connect(config: LabConfig, username: str, password: str, properties: dict | None = None) -> MessagingService:

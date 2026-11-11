@@ -78,6 +78,7 @@ python -m solace_demo delivery
 See [`.env.example`](.env.example) for every supported variable.
 
 - **Local lab:** `SOLACE_HOST`, `SOLACE_SEMP_URL`, `SOLACE_VPN`, and the admin, publisher, and subscriber passwords.
+- **Publisher client name:** optional `SOLACE_CLIENT_NAME` sets the publisher SMF client name in Broker Manager. When unset, the API auto-generates a name. Two publisher sessions with the same name will disconnect each other.
 - **Two-broker path:** set `SOLACE_SPLIT_CLIENT=1` and the `SOLACE_PUBLISHER_*` / `SOLACE_OPERATOR_*` variables in a separate env file. See [SPLIT-CLIENT.md](SPLIT-CLIENT.md).
 - **Restricted client:** set `SOLACE_PERMISSIONS_DEMO=1` and the permissions credentials. See [PERMISSIONS-DEMO.md](PERMISSIONS-DEMO.md).
 - **Simulated weather (MQTT):** set `SOLACE_MQTT_WEATHER=1`. See [MQTT-WEATHER.md](MQTT-WEATHER.md).

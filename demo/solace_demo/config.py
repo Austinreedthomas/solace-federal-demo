@@ -95,6 +95,15 @@ def _flag(name: str) -> bool:
     return _merged(name, "").strip().lower() in {"1", "true", "yes"}
 
 
+def publisher_client_name() -> str:
+    """Optional SMF client name for the publisher session.
+
+    Reads SOLACE_CLIENT_NAME. An empty or unset value means the Solace API
+    should auto-generate a name.
+    """
+    return _usable(_merged("SOLACE_CLIENT_NAME", ""))
+
+
 def _loopback(url: str) -> bool:
     parsed = urlparse(url if "://" in url else f"tcp://{url}")
     return (parsed.hostname or "").lower() in {"127.0.0.1", "localhost"}
