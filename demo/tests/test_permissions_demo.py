@@ -325,6 +325,45 @@ def test_recording_pages_drop_disclaimer_clutter():
     assert "SPLIT-CLIENT.md" in readme
 
 
+def test_pages_include_two_broker_path_strips():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "web"
+    publisher = (root / "publisher.html").read_text(encoding="utf-8")
+    operator = (root / "operator.html").read_text(encoding="utf-8")
+    restricted = (root / "restricted-operator.html").read_text(encoding="utf-8")
+    css = (root / "app.css").read_text(encoding="utf-8")
+    assert ".path-strip" in css
+    for page in (publisher, operator, restricted):
+        assert 'id="path-strip"' in page
+        assert "path-strip" in page and "hidden" in page
+        assert 'state.mode !== "split-client"' in page
+    assert "SMF (alerts)" in publisher
+    assert "MQTT (weather)" in publisher
+    assert "Solace Cloud broker" in publisher
+    assert "Static bridge" in operator
+    assert "Local Solace broker" in operator
+    assert "ACL profile check" in restricted
+
+
+def test_operator_cards_show_smf_subscriptions():
+    import html
+    from pathlib import Path
+
+    from solace_demo.catalog import LAUNCH_SUBSCRIPTION, OBJECT_SUBSCRIPTION, WEATHER_SUBSCRIPTION
+
+    operator = Path(__file__).resolve().parents[1].joinpath("web", "operator.html").read_text(encoding="utf-8")
+    shown = html.unescape(operator)
+    assert LAUNCH_SUBSCRIPTION in shown
+    assert OBJECT_SUBSCRIPTION in shown
+    assert WEATHER_SUBSCRIPTION in shown
+    assert 'code class="topic"' in operator
+    assert "is one level" in shown
+    assert "is all remaining levels" in shown
+    assert "127.0.0.1" not in operator
+    assert "primaryOperatorPath" not in operator
+
+
 def test_connection_verified_requires_the_sdk_session(tmp_path, monkeypatch):
     path = tmp_path / "client.json"
     path.write_text(json.dumps({

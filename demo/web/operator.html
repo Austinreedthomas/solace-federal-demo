@@ -15,6 +15,19 @@
       <a data-role="operators" href="/operator" aria-current="page">Primary Operator</a>
       <a data-role="operators" href="/restricted-operator">Restricted Operator</a>
     </nav>
+    <figure class="path-strip" id="path-strip" hidden aria-label="Primary Operator path">
+      <div class="path-flow">
+        <div class="path-node">Publisher</div>
+        <div class="path-edge"><span class="path-arrow" aria-hidden="true">→</span></div>
+        <div class="path-node">Solace Cloud broker</div>
+        <div class="path-edge"><span class="path-arrow" aria-hidden="true">→</span></div>
+        <div class="path-node">Static bridge</div>
+        <div class="path-edge"><span class="path-arrow" aria-hidden="true">→</span></div>
+        <div class="path-node">Local Solace broker</div>
+        <div class="path-edge"><span class="path-arrow" aria-hidden="true">→</span></div>
+        <div class="path-node">Primary Operator</div>
+      </div>
+    </figure>
     <p class="identity" id="identity">Checking the configured operator client…</p>
     <p class="badge" id="mode">Checking the Solace session…</p>
   </header>
@@ -38,6 +51,7 @@
           <button type="button" class="clear" data-clear="launch-any-site">Clear</button>
         </div>
         <p class="lead">This operator asked for every launch alert.</p>
+        <p class="lead">SMF subscription <code class="topic">ssa/unclass/*/launch/&gt;</code> matches a launch event from any site. <code class="topic">*</code> is one level; <code class="topic">&gt;</code> is all remaining levels.</p>
         <div class="feed" id="launch-any-site"></div>
       </section>
       <section class="panel">
@@ -46,6 +60,7 @@
           <button type="button" class="clear" data-clear="one-object-ground1-25544">Clear</button>
         </div>
         <p class="lead">This operator asked for every event about object 25544 at ground 1, including the ground 1 heartbeat and the queued launch alert for this object.</p>
+        <p class="lead">SMF subscription <code class="topic">ssa/unclass/ground1/*/25544/&gt;</code> matches any event category for that object at Ground 1. <code class="topic">*</code> is one level; <code class="topic">&gt;</code> is all remaining levels.</p>
         <div class="feed" id="one-object-ground1-25544"></div>
       </section>
     </div>
@@ -54,7 +69,8 @@
         <h2>Weather</h2>
         <button type="button" class="clear" data-clear="weather-ground1">Clear</button>
       </div>
-      <p class="lead" id="weather-note">Received with SMF. The publisher used MQTT.</p>
+      <p class="lead" id="weather-note">SMF subscription <code class="topic">ssa/unclass/ground1/weather/&gt;</code> matches any Ground 1 weather station and reading. <code class="topic">&gt;</code> is all remaining levels.</p>
+      <p class="lead" id="weather-publish-topic"></p>
       <div class="feed" id="weather-ground1"></div>
     </section>
   </main>
@@ -136,6 +152,9 @@
     }
     function applyState(state, extraNote) {
       lastGood = state;
+
+        const strip = document.getElementById("path-strip");
+        if (strip) strip.hidden = state.mode !== "split-client";
       const listen = document.getElementById("listen");
       const client = state.primaryOperatorClient || "not configured";
       const broker = state.operatorBrokerLabel || "Solace broker";
@@ -168,7 +187,8 @@
       if (weather) weather.hidden = !(state.weatherEnabled || state.weatherProblem);
       const weatherNote = document.getElementById("weather-note");
       if (weatherNote && state.weatherTopic) {
-        weatherNote.textContent = "SMF subscription " + (state.weatherSubscription || state.weatherTopic) + " matches any Ground 1 weather station and reading. The publisher sent MQTT QoS 0 on " + state.weatherTopic + ".";
+        const pub = document.getElementById("weather-publish-topic");
+        if (pub) pub.textContent = "The publisher sent MQTT QoS 0 on " + state.weatherTopic + ".";
       }
       render(state.events || []);
     }

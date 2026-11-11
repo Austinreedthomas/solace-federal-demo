@@ -14,6 +14,15 @@
       <a data-role="operators" href="/operator">Primary Operator</a>
       <a data-role="operators" href="/restricted-operator" aria-current="page">Restricted Operator</a>
     </nav>
+    <figure class="path-strip" id="path-strip" hidden aria-label="Restricted Operator path">
+      <div class="path-flow">
+        <div class="path-node">Publisher</div>
+        <div class="path-edge"><span class="path-arrow" aria-hidden="true">→</span></div>
+        <div class="path-node">Solace Cloud broker<span class="path-mark">ACL profile check</span></div>
+        <div class="path-edge"><span class="path-arrow" aria-hidden="true">→</span></div>
+        <div class="path-node">Restricted Operator</div>
+      </div>
+    </figure>
     <p class="identity" id="identity">Checking whether the restricted client is turned on…</p>
     <p class="badge" id="mode">Not connected</p>
     <p class="where" id="actor">No client. No action yet.</p>
@@ -75,6 +84,9 @@
     }
     function applyIdentity(state) {
       lastState = state;
+
+        const strip = document.getElementById("path-strip");
+        if (strip) strip.hidden = state.mode !== "split-client";
       const identity = document.getElementById("identity");
       const policy = document.getElementById("policy");
       const problem = document.getElementById("problem");

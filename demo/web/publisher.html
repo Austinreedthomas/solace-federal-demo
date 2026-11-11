@@ -14,6 +14,17 @@
       <a data-role="operators" href="/operator">Primary Operator</a>
       <a data-role="operators" href="/restricted-operator">Restricted Operator</a>
     </nav>
+    <figure class="path-strip" id="path-strip" hidden aria-label="Publisher path">
+      <div class="path-flow">
+        <div class="path-node">Publisher</div>
+        <div class="path-edge">
+          <span>SMF (alerts)</span>
+          <span class="path-arrow" aria-hidden="true">→</span>
+          <span>MQTT (weather)</span>
+        </div>
+        <div class="path-node">Solace Cloud broker</div>
+      </div>
+    </figure>
     <p class="badge" id="mode">Checking the Solace session…</p>
   </header>
   <main>
@@ -199,6 +210,9 @@
         document.getElementById("guaranteed").disabled = busy || guaranteedLocked;
         const note = document.getElementById("guaranteed-note");
         if (note) note.textContent = state.guaranteedNote || "";
+
+        const strip = document.getElementById("path-strip");
+        if (strip) strip.hidden = state.mode !== "split-client";
         if (state.publisherName === "Solace Cloud" && state.operatorName === "local Solace broker") {
           const connected = state.brokerConnected ? "Connected to Solace Cloud." : "Not connected. Configured target: Solace Cloud.";
           badge.textContent = connected + " Bridge to-cloud-unclass carries alerts to the operator broker.";
