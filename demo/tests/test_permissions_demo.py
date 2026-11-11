@@ -312,6 +312,7 @@ def test_recording_pages_drop_disclaimer_clutter():
     assert "Client " in operator
     assert "path to the local broker" not in publisher
     assert ">Try to publish to a forbidden topic</button>" in restricted
+    assert "Subscribe and send one message" in restricted
     assert "Same computer" not in restricted
     assert "this computer" not in restricted.lower()
     assert "permissionsBrokerLabel" in restricted

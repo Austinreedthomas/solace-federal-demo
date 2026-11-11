@@ -61,7 +61,7 @@ Connection hosts, protocols, and logins are listed in [Connections](../README.md
 3. Open the profile's **Client Connect** tab. Client Connect Default Action is Allow.
 4. Open **Publish Topic**: Publish Default Action is Disallow, with one exception, `solace-demo/permissions/allowed/>`.
 5. Open **Subscribe Topic**: Subscribe Default Action is Disallow, with the same exception.
-6. On the Restricted Operator page, click **Subscribe and send one**. The green result reads: This client received its own message. Sent ID matches Received ID on topic `solace-demo/permissions/allowed/proof`.
+6. On the Restricted Operator page, click **Subscribe and send one message**. The green result reads: This client received its own message. Sent ID matches Received ID on topic `solace-demo/permissions/allowed/proof`.
 7. Click **Request the forbidden subscription**. The red result reads: Broker refused this subscription, on topic `solace-demo/permissions/denied/proof`, with **Subscription ACL Denied**.
 8. Click **Try to publish to a forbidden topic**. The red result reads: Broker refused this publish, on topic `solace-demo/permissions/denied/proof`.
 
