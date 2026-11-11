@@ -27,6 +27,35 @@ flowchart LR
   Cloud --> Rest[Restricted Operator]
 ```
 
+## Topic structure
+
+Events in this demo use a six-level topic:
+
+`ssa/<classification>/<site>/<category>/<object>/<event>`
+
+| Level | Meaning | Examples |
+| --- | --- | --- |
+| Root | Shared topic root for this demo | `ssa` |
+| Classification | Handling label | `unclass` |
+| Site | Ground site | `ground1`, `ground2` |
+| Category | Kind of event | `launch`, `status`, `live`, `weather` |
+| Object | The subject of the event | `25544`, `station-1` |
+| Event | Leaf type | `alert`, `heartbeat`, `update`, `reading` |
+
+Examples used by the lab:
+
+- `ssa/unclass/ground1/launch/25544/alert`
+- `ssa/unclass/ground2/status/25544/heartbeat`
+- `ssa/unclass/ground1/live/25544/update`
+- `ssa/unclass/ground1/weather/station-1/reading`, where the object is a weather station rather than a satellite identifier
+
+Subscriptions use `*` for one level and `>` for one or more levels at the end. The Primary Operator in Demo 1 uses both:
+
+- `ssa/unclass/*/launch/>` — launch alerts from any ground site
+- `ssa/unclass/ground1/*/25544/>` — every event for object 25544 at Ground 1
+
+On the optional two-broker path, Guaranteed messages use a separate topic tree so they do not ride the Direct bridge subscription `ssa/>`. The configured prefix is `ssa-guaranteed/unclass` in place of `ssa/unclass`, so the same launch alert is published as `ssa-guaranteed/unclass/ground1/launch/25544/alert`. In the single-broker lab, that prefix is left unset and Guaranteed alerts stay on `ssa/unclass/...`.
+
 ## Prerequisites
 
 - Python 3.9 or newer
