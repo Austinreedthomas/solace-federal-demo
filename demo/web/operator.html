@@ -165,7 +165,7 @@
       if (weather) weather.hidden = !(state.weatherEnabled || state.weatherProblem);
       const weatherNote = document.getElementById("weather-note");
       if (weatherNote && state.weatherTopic) {
-        weatherNote.textContent = "SMF subscription for " + state.weatherTopic + ". The publisher used MQTT QoS 0.";
+        weatherNote.textContent = "SMF subscription " + (state.weatherSubscription || state.weatherTopic) + " matches any Ground 1 weather station and reading. The publisher sent MQTT QoS 0 on " + state.weatherTopic + ".";
       }
       render(state.events || []);
     }

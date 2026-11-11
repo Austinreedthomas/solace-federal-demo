@@ -804,6 +804,7 @@ class LiveLab:
             "guaranteedNote": self._guaranteed_note(),
             "weatherEnabled": self.weather.enabled,
             "weatherTopic": WEATHER_TOPIC if self.weather.enabled else "",
+            "weatherSubscription": WEATHER_SUBSCRIPTION if self.weather.enabled else "",
             "weatherTarget": self.weather.target() if self.weather.enabled else "",
             "weatherProblem": self.weather.problem,
             **permissions_status(),
