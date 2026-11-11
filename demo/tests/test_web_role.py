@@ -383,7 +383,7 @@ def test_clear_removes_one_card_from_the_page_history(monkeypatch):
     root = Path(__file__).resolve().parents[1] / "web"
     page = (root / "operator.html").read_text(encoding="utf-8")
     restricted = (root / "restricted-operator.html").read_text(encoding="utf-8")
-    assert page.count(">Clear<") == 2
+    assert page.count(">Clear<") == 3
     assert 'data-clear="launch-any-site"' in page
     assert 'data-clear="one-object-ground1-25544"' in page
     assert "appears after Disconnect" not in page
@@ -454,3 +454,12 @@ def test_role_all_still_serves_every_page(monkeypatch):
         assert json.loads(missing[1])["error"] == "not found"
     finally:
         server.shutdown()
+
+
+def test_weather_card_can_be_cleared():
+    lab = LiveLab(_config(), role="operators")
+    lab._generation = 1
+    _record(lab, "w1", "weather-ground1")
+    _record(lab, "l1", "launch-any-site")
+    lab.clear_display("weather-ground1")
+    assert [event["alertId"] for event in lab._events] == ["l1"]

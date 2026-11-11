@@ -44,6 +44,7 @@ SUBSCRIBER_CLIENT_PROFILE = "ssa-subscriber-client"
 
 CONSUMER_LAUNCH = "launch-any-site"
 CONSUMER_OBJECT = "one-object-ground1-25544"
+CONSUMER_WEATHER = "weather-ground1"
 
 # Stable ids. Reruns publish the same ids after the demo queue is recreated.
 ROUTING_CASES = (

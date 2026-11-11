@@ -24,6 +24,7 @@ from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.topic_subscription import TopicSubscription
 
 from solace_demo.catalog import (
+    CONSUMER_WEATHER,
     CONSUMER_LAUNCH,
     CONSUMER_OBJECT,
     LAUNCH_SUBSCRIPTION,
@@ -514,7 +515,7 @@ class LiveLab:
             (CONSUMER_OBJECT, OBJECT_SUBSCRIPTION, False),
         ]
         if self.weather.enabled:
-            specs.append(("weather-ground1", WEATHER_SUBSCRIPTION, False))
+            specs.append((CONSUMER_WEATHER, WEATHER_SUBSCRIPTION, False))
         try:
             for feed, subscription, queue in specs:
                 self._start_thread(generation, feed, subscription, queue)
@@ -656,7 +657,7 @@ class LiveLab:
 
     def clear_display(self, feed: str) -> dict:
         """Drop one card's receipts from this page. The broker queue is left as it is."""
-        if feed not in {CONSUMER_LAUNCH, CONSUMER_OBJECT}:
+        if feed not in {CONSUMER_LAUNCH, CONSUMER_OBJECT, CONSUMER_WEATHER}:
             raise ValueError("unknown feed")
         with self._lock:
             self._events = [event for event in self._events if display_feed(event) != feed]
