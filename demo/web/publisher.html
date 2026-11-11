@@ -190,7 +190,7 @@
     document.getElementById("heartbeat").addEventListener("click", () => send(heartbeatKind(), document.getElementById("send-result")));
     document.getElementById("guaranteed").addEventListener("click", () => send(guaranteedKind(), document.getElementById("offline-result")));
     document.getElementById("direct").addEventListener("click", () => send(directKind(), document.getElementById("offline-result")));
-    document.getElementById("weather").addEventListener("click", () => send("weather", document.getElementById("weather-result")));
+    document.getElementById("weather").addEventListener("click", () => send("weather-" + selectedGround(), document.getElementById("weather-result")));
     async function health() {
       const badge = document.getElementById("mode");
       try {
@@ -213,7 +213,7 @@
         const weatherNote = document.getElementById("weather-note");
         if (weatherNote && state.weatherProblem) weatherNote.textContent = state.weatherProblem;
         const weatherTopic = document.getElementById("weather-topic");
-        if (weatherTopic) weatherTopic.textContent = state.weatherTopic ? ("MQTT topic " + state.weatherTopic + (state.weatherTarget ? " · " + state.weatherTarget : "")) : "";
+        if (weatherTopic) weatherTopic.textContent = state.weatherTopic ? ("MQTT topic " + state.weatherTopic.replace("/ground1/", "/" + selectedGround() + "/") + (state.weatherTarget ? " · " + state.weatherTarget : "")) : "";
       } catch (err) {
         badge.textContent = "This page cannot reach the demo server. Refresh after it is started again.";
       }

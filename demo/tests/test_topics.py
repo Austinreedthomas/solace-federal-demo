@@ -212,3 +212,13 @@ def test_weather_topic_is_direct_and_not_object_25544():
     body = alert_body("wx-1", WEATHER_TOPIC)
     assert body["alertText"] == "Weather reading"
     assert body["objectId"] == "station-1"
+
+
+def test_weather_follows_selected_ground():
+    from solace_demo.catalog import WEATHER_SUBSCRIPTION, WEATHER_TOPICS
+    from solace_demo.topics import DIRECT_BRIDGE_SUBSCRIPTION
+
+    assert WEATHER_TOPICS["ground2"] == "ssa/unclass/ground2/weather/station-1/reading"
+    assert subscription_matches(WEATHER_SUBSCRIPTION, WEATHER_TOPICS["ground1"])
+    assert not subscription_matches(WEATHER_SUBSCRIPTION, WEATHER_TOPICS["ground2"])
+    assert subscription_matches(DIRECT_BRIDGE_SUBSCRIPTION, WEATHER_TOPICS["ground2"])

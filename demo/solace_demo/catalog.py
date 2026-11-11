@@ -26,6 +26,10 @@ TOPIC_DIRECT_GROUND2 = "ssa/unclass/ground2/live/25544/update"
 # existing launch and object subscriptions do not match it.
 WEATHER_TOPIC = "ssa/unclass/ground1/weather/station-1/reading"
 WEATHER_SUBSCRIPTION = "ssa/unclass/ground1/weather/>"
+WEATHER_TOPICS = {
+    "ground1": WEATHER_TOPIC,
+    "ground2": "ssa/unclass/ground2/weather/station-1/reading",
+}
 
 QUEUE_NAME = "q-ssa-operator"
 # The browser console binds this queue, not q-ssa-operator, so it does not

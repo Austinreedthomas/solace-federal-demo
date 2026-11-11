@@ -104,7 +104,7 @@ def _load_enabled() -> WeatherSettings:
     return WeatherSettings(True, scheme, hostname, port, username, "" if passwordless else password, trust)
 
 
-def publish_weather(settings: WeatherSettings, alert_id: str, body: dict) -> None:
+def publish_weather(settings: WeatherSettings, alert_id: str, body: dict, topic: str = WEATHER_TOPIC) -> None:
     """Hand one QoS 0 MQTT publish to the socket. That is not a broker acknowledgement."""
     try:
         import paho.mqtt.client as mqtt
@@ -118,7 +118,7 @@ def publish_weather(settings: WeatherSettings, alert_id: str, body: dict) -> Non
     client.connect(settings.host, settings.port, keepalive=10)
     client.loop_start()
     try:
-        info = client.publish(WEATHER_TOPIC, json.dumps(body, separators=(",", ":"), sort_keys=True), qos=0, retain=False)
+        info = client.publish(topic, json.dumps(body, separators=(",", ":"), sort_keys=True), qos=0, retain=False)
         info.wait_for_publish(timeout=5)
         if not info.is_published():
             raise TimeoutError("The MQTT client did not hand the reading to the socket.")
@@ -127,8 +127,8 @@ def publish_weather(settings: WeatherSettings, alert_id: str, body: dict) -> Non
         client.disconnect()
 
 
-def weather_body(alert_id: str) -> dict:
-    body = alert_body(alert_id, WEATHER_TOPIC)
+def weather_body(alert_id: str, topic: str = WEATHER_TOPIC) -> dict:
+    body = alert_body(alert_id, topic)
     body["simulated"] = True
     body["temperatureC"] = 18
     body["windKph"] = 12

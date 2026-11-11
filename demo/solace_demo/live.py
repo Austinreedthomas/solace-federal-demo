@@ -31,6 +31,7 @@ from solace_demo.catalog import (
     WEB_QUEUE_NAME,
     WEATHER_SUBSCRIPTION,
     WEATHER_TOPIC,
+    WEATHER_TOPICS,
     TOPIC_BOTH,
     TOPIC_DIRECT_GROUND2,
     TOPIC_DIRECT_ONLY,
@@ -688,7 +689,9 @@ class LiveLab:
 
     def send(self, kind: str) -> dict:
         if kind == "weather":
-            return self._send_weather()
+            return self._send_weather("ground1")
+        if kind.startswith("weather-") and kind[len("weather-"):] in WEATHER_TOPICS:
+            return self._send_weather(kind[len("weather-"):])
         if kind not in SENDS:
             raise ValueError("unknown send")
         self._observe()
@@ -888,16 +891,17 @@ class LiveLab:
             return LOCAL_SUBSCRIBE_BLOCKED
         return "A Solace session is down. Nothing was changed."
 
-    def _send_weather(self) -> dict:
+    def _send_weather(self, site: str = "ground1") -> dict:
+        topic = WEATHER_TOPICS[site]
         if not self.weather.enabled:
             text = self.weather.problem or "The simulated weather example is off."
             return not_sent(text, text)
         alert_id = "wx-" + uuid.uuid4().hex[:10]
-        body = weather_body(alert_id)
+        body = weather_body(alert_id, topic)
         with self._lock:
-            self._published[alert_id] = {"topic": WEATHER_TOPIC, "delivery": "mqtt-qos0", "kind": "weather"}
+            self._published[alert_id] = {"topic": topic, "delivery": "mqtt-qos0", "kind": "weather"}
         try:
-            publish_weather(self.weather, alert_id, body)
+            publish_weather(self.weather, alert_id, body, topic)
         except Exception as exc:
             with self._lock:
                 self._published.pop(alert_id, None)
@@ -908,7 +912,7 @@ class LiveLab:
             "sendReturned": True,
             "brokerAck": False,
             "alertId": alert_id,
-            "topic": WEATHER_TOPIC,
+            "topic": topic,
             "alertText": body["alertText"],
             "delivery": "mqtt-qos0",
             "detail": "mqtt qos 0 publish handed to the socket",
