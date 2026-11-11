@@ -18,7 +18,7 @@ Restart the web process so it loads the flag. The Restricted Operator page names
 
 The buttons are:
 
-1. **Subscribe and send one message** on `solace-demo/permissions/allowed/proof`. The client should receive its own message.
+1. **Connect, subscribe, and send** on `solace-demo/permissions/allowed/proof`. The client should receive its own message.
 2. **Request the forbidden subscription** on `solace-demo/permissions/denied/proof`. The broker should refuse with **Subscription ACL Denied**.
 3. **Try to publish to a forbidden topic** on the same denied prefix. The third button sends one persistent message so the broker must accept or reject it.
 
