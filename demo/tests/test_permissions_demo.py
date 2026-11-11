@@ -339,7 +339,7 @@ def test_pages_include_two_broker_path_strips():
         assert 'id="path-strip"' in page
         assert "path-strip" in page and "hidden" in page
         assert 'state.mode !== "split-client"' in page
-    assert "SMF (alerts)" in publisher
+    assert "SMF (alerts, heartbeat)" in publisher
     assert "MQTT (weather)" in publisher
     assert "Solace Cloud broker" in publisher
     assert "Static bridge" in operator
